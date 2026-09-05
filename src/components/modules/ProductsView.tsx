@@ -677,8 +677,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                         key={item.id}
                         className={`clickable ${isSelected ? 'row-selected' : ''}`}
                         onClick={() => {
-                          setSelectedProduct(item);
-                          setIsDetailModalOpen(true);
+                          handleOpenEditModal(item);
                         }}
                         style={{
                           background: isChecked ? 'rgba(47, 140, 255, 0.18)' : isSelected ? 'rgba(47, 140, 255, 0.12)' : undefined,
@@ -712,40 +711,30 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                           )}
                         </td>
                         <td className="number-cell">
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px' }}>
-                            <button
-                              type="button"
-                              className="btn-glass btn-glass-primary btn-sm"
-                              style={{
-                                padding: '4px 10px',
-                                fontSize: '11px',
-                                background: 'rgba(47, 140, 255, 0.2)',
-                                border: '1px solid rgba(47, 140, 255, 0.4)',
-                                color: '#38d9ff',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                              }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleOpenEditModal(item);
-                              }}
-                            >
-                              <Edit size={12} /> Edit
-                            </button>
-                            <button
-                              type="button"
-                              className="btn-glass btn-glass-secondary btn-sm"
-                              style={{ padding: '4px 10px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedProduct(item);
-                                setIsDetailModalOpen(true);
-                              }}
-                            >
-                              Inspect <ChevronRight size={12} />
-                            </button>
-                          </div>
+                          <button
+                            type="button"
+                            className="btn-glass btn-glass-primary btn-sm"
+                            style={{
+                              padding: '5px 14px',
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              background: 'linear-gradient(135deg, #2f8cff 0%, #0056b3 100%)',
+                              color: '#ffffff',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                              boxShadow: '0 2px 8px rgba(47, 140, 255, 0.35)',
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenEditModal(item);
+                            }}
+                          >
+                            <Edit size={13} /> Edit
+                          </button>
                         </td>
                       </tr>
                     );

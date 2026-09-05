@@ -133,12 +133,15 @@ export const App: React.FC = () => {
 
   const handleUpdateProduct = (updatedProduct: Product) => {
     setProducts((prev) => {
-      const exists = prev.some((p) => p.id === updatedProduct.id);
+      const matchIndex = prev.findIndex(
+        (p) => p.id === updatedProduct.id || p.sku.toUpperCase() === updatedProduct.sku.toUpperCase()
+      );
       let updated: Product[];
-      if (exists) {
-        updated = prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p));
+      if (matchIndex !== -1) {
+        updated = [...prev];
+        updated[matchIndex] = { ...prev[matchIndex], ...updatedProduct };
       } else {
-        updated = [updatedProduct, ...prev];
+        updated = prev.map((p) => (p.id === updatedProduct.id ? { ...p, ...updatedProduct } : p));
       }
       try {
         localStorage.setItem('df360_products', JSON.stringify(updated));
