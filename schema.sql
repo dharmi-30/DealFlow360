@@ -495,11 +495,20 @@ INSERT INTO quotations (id, company_id, customer_id, sales_rep_id, quote_number,
 
 -- 9. QUOTE ITEMS
 INSERT INTO quote_items (id, quotation_id, product_id, product_name, category, unit_price, unit_cost, tax_rate, quantity, discount_percent, line_subtotal, discount_amount, tax_amount, line_total) VALUES
-('qi-1042-101', 'f1eebc99-9c0b-4ef8-bb6d-6bb9bd380a66', 'd1eebc99-9c0b-4ef8-bb6d-6bb9bd380a44', 'Laptop Pro 14', 'Hardware', 1850.00, 1250.00, 18.00, 2, 12.00, 3700.00, 444.00, 0.00, 3256.00),
-('qi-1042-102', 'f1eebc99-9c0b-4ef8-bb6d-6bb9bd380a66', 'd2eebc99-9c0b-4ef8-bb6d-6bb9bd380a44', 'Onsite Setup Service', 'Professional Services', 450.00, 180.00, 18.00, 1, 18.00, 450.00, 81.00, 0.00, 369.00),
-('qi-1042-103', 'f1eebc99-9c0b-4ef8-bb6d-6bb9bd380a66', 'd3eebc99-9c0b-4ef8-bb6d-6bb9bd380a44', 'Extended Warranty', 'Support', 299.00, 95.00, 18.00, 1, 10.00, 299.00, 29.90, 0.00, 269.10),
+('qi-1042-101', 'f1eebc99-9c0b-4ef8-bb6d-6bb9bd380a66', 'd1eebc99-9c0b-4ef8-bb6d-6bb9bd380a44', 'Laptop Pro 14', 'Hardware', 1850.00, 1250.00, 18.00, 6, 12.00, 11100.00, 1332.00, 0.00, 9768.00),
+('qi-1042-102', 'f1eebc99-9c0b-4ef8-bb6d-6bb9bd380a66', 'd2eebc99-9c0b-4ef8-bb6d-6bb9bd380a44', 'Onsite Setup Service', 'Professional Services', 450.00, 180.00, 18.00, 2, 15.00, 900.00, 135.00, 0.00, 765.00),
+('qi-1042-103', 'f1eebc99-9c0b-4ef8-bb6d-6bb9bd380a66', 'd3eebc99-9c0b-4ef8-bb6d-6bb9bd380a44', 'Extended Warranty', 'Support', 299.00, 95.00, 18.00, 2, 10.00, 598.00, 59.80, 0.00, 538.20),
 ('qi-1028-101', 'f2eebc99-9c0b-4ef8-bb6d-6bb9bd380a66', 'd1eebc99-9c0b-4ef8-bb6d-6bb9bd380a44', 'Laptop Pro 14', 'Hardware', 1850.00, 1250.00, 18.00, 15, 10.00, 27750.00, 2775.00, 0.00, 24975.00),
-('qi-1028-102', 'f2eebc99-9c0b-4ef8-bb6d-6bb9bd380a66', 'd4eebc99-9c0b-4ef8-bb6d-6bb9bd380a44', 'Docking Station', 'Hardware', 220.00, 135.00, 18.00, 20, 12.50, 4400.00, 550.00, 0.00, 3850.00);
+('qi-1028-102', 'f2eebc99-9c0b-4ef8-bb6d-6bb9bd380a66', 'd4eebc99-9c0b-4ef8-bb6d-6bb9bd380a44', 'Docking Station', 'Hardware', 220.00, 135.00, 18.00, 20, 12.50, 4400.00, 550.00, 0.00, 3850.00),
+('qi-1015-101', 'f3eebc99-9c0b-4ef8-bb6d-6bb9bd380a66', 'd1eebc99-9c0b-4ef8-bb6d-6bb9bd380a44', 'Laptop Pro 14', 'Hardware', 1850.00, 1250.00, 18.00, 5, 6.00, 9250.00, 555.00, 0.00, 8695.00),
+('qi-1015-102', 'f3eebc99-9c0b-4ef8-bb6d-6bb9bd380a66', 'd4eebc99-9c0b-4ef8-bb6d-6bb9bd380a44', 'Docking Station', 'Hardware', 220.00, 135.00, 18.00, 2, 5.00, 440.00, 22.00, 0.00, 418.00),
+('qi-1015-103', 'f3eebc99-9c0b-4ef8-bb6d-6bb9bd380a66', 'd2eebc99-9c0b-4ef8-bb6d-6bb9bd380a44', 'Onsite Setup Service', 'Professional Services', 450.00, 180.00, 18.00, 1, 10.00, 450.00, 45.00, 0.00, 405.00),
+('qi-1015-104', 'f3eebc99-9c0b-4ef8-bb6d-6bb9bd380a66', 'd5eebc99-9c0b-4ef8-bb6d-6bb9bd380a44', 'Care Plan 2yr', 'Software Subscription', 650.00, 220.00, 18.00, 1, 10.00, 650.00, 65.00, 0.00, 585.00),
+('qi-1030-101', 'f4eebc99-9c0b-4ef8-bb6d-6bb9bd380a66', 'd1eebc99-9c0b-4ef8-bb6d-6bb9bd380a44', 'Laptop Pro 14', 'Hardware', 1850.00, 1250.00, 18.00, 8, 10.00, 14800.00, 1480.00, 0.00, 13320.00),
+('qi-1030-102', 'f4eebc99-9c0b-4ef8-bb6d-6bb9bd380a66', 'd4eebc99-9c0b-4ef8-bb6d-6bb9bd380a44', 'Docking Station', 'Hardware', 220.00, 135.00, 18.00, 10, 10.00, 2200.00, 220.00, 0.00, 1980.00),
+('qi-1050-101', 'f5eebc99-9c0b-4ef8-bb6d-6bb9bd380a66', 'd1eebc99-9c0b-4ef8-bb6d-6bb9bd380a44', 'Laptop Pro 14', 'Hardware', 1850.00, 1250.00, 18.00, 20, 10.00, 37000.00, 3700.00, 0.00, 33300.00),
+('qi-1050-102', 'f5eebc99-9c0b-4ef8-bb6d-6bb9bd380a66', 'd4eebc99-9c0b-4ef8-bb6d-6bb9bd380a44', 'Docking Station', 'Hardware', 220.00, 135.00, 18.00, 20, 10.00, 4400.00, 440.00, 0.00, 3960.00),
+('qi-1050-103', 'f5eebc99-9c0b-4ef8-bb6d-6bb9bd380a66', 'd5eebc99-9c0b-4ef8-bb6d-6bb9bd380a44', 'Care Plan 2yr', 'Software Subscription', 650.00, 220.00, 18.00, 7, 10.00, 4550.00, 455.00, 0.00, 4095.00);
 
 -- 10. APPROVALS
 INSERT INTO approvals (id, quotation_id, approver_id, approval_role, status, comments) VALUES

@@ -208,11 +208,28 @@ export function parseSchemaSqlSeedData() {
       status: statusMap[q.status] || 'draft',
       requiresApproval: Boolean(q.approval_required),
       approvalReason: q.approval_required ? 'Discount exceeds allowed rep limit threshold.' : undefined,
-      subtotal: Number(q.subtotal),
-      discountAmount: Number(q.discount_amount),
-      grandTotal: Number(q.total_amount),
-      totalCogs: Number(q.estimated_cost),
-      marginPct: Number(q.margin_percent),
+      subtotal: items.length > 0
+        ? items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0)
+        : 0,
+      discountAmount: items.length > 0
+        ? items.reduce((sum, item) => sum + (item.unitPrice * item.quantity * item.discountPct) / 100, 0)
+        : 0,
+      grandTotal: items.length > 0
+        ? items.reduce((sum, item) => sum + item.lineTotal, 0)
+        : 0,
+      totalCogs: items.length > 0
+        ? items.reduce((sum, item) => sum + item.cogs * item.quantity, 0)
+        : 0,
+      marginPct: items.length > 0 && items.reduce((sum, item) => sum + item.lineTotal, 0) > 0
+        ? Number(
+            (
+              ((items.reduce((sum, item) => sum + item.lineTotal, 0) -
+                items.reduce((sum, item) => sum + item.cogs * item.quantity, 0)) /
+                items.reduce((sum, item) => sum + item.lineTotal, 0)) *
+              100
+            ).toFixed(1)
+          )
+        : 0,
       deliveryRequestDate: '2026-09-20',
       customerComments: 'Parsed live from PostgreSQL schema.sql seed queries.',
       items,

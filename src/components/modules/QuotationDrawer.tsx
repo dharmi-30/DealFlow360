@@ -62,7 +62,26 @@ export const QuotationDrawer: React.FC<QuotationDrawerProps> = ({
   );
 
   useEffect(() => {
-    setQuotation(initialQuotation);
+    if (initialQuotation) {
+      const items = initialQuotation.items || [];
+      const subtotal = items.reduce((acc, i) => acc + (i.unitPrice || 0) * (i.quantity || 0), 0);
+      const grandTotal = items.reduce((acc, i) => acc + (i.lineTotal || 0), 0);
+      const discountAmount = subtotal - grandTotal;
+      const totalCogs = items.reduce((acc, i) => acc + (i.cogs || 0) * (i.quantity || 0), 0);
+      const marginPct = grandTotal > 0 ? ((grandTotal - totalCogs) / grandTotal) * 100 : 0;
+
+      setQuotation({
+        ...initialQuotation,
+        items,
+        subtotal,
+        discountAmount,
+        grandTotal,
+        totalCogs,
+        marginPct: Number(marginPct.toFixed(1)),
+      });
+    } else {
+      setQuotation(null);
+    }
     setSaveSuccessMsg('');
   }, [initialQuotation]);
 
@@ -289,64 +308,72 @@ export const QuotationDrawer: React.FC<QuotationDrawerProps> = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {quotation.items.map((item) => {
-                    const limit = getDiscountLimit(item);
-                    const isOver = item.discountPct > limit;
-                    const overPts = item.discountPct - limit;
+                  {quotation.items.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} style={{ textAlign: 'center', color: '#9aa8ba', padding: '24px' }}>
+                        No line items added to this quotation proposal yet. Total is $0.00.
+                      </td>
+                    </tr>
+                  ) : (
+                    quotation.items.map((item) => {
+                      const limit = getDiscountLimit(item);
+                      const isOver = item.discountPct > limit;
+                      const overPts = item.discountPct - limit;
 
-                    return (
-                      <tr key={item.id}>
-                        <td>
-                          <div style={{ fontWeight: 600, color: '#f5f7fa' }}>{item.productName}</div>
-                          <div className="font-mono" style={{ fontSize: '11px', color: '#64748b' }}>{item.sku}</div>
-                        </td>
-                        <td className="number-cell font-mono" style={{ fontWeight: 600 }}>
-                          Qty {item.quantity}
-                        </td>
-                        <td className="number-cell font-mono" style={{ color: '#f5f7fa' }}>
-                          ${item.unitPrice.toLocaleString('en-US', { minimumFractionDigits: 0 })}
-                        </td>
-                        <td className="number-cell font-mono" style={{ color: isOver ? '#f5b544' : '#f5f7fa', fontWeight: 600 }}>
-                          {item.discountPct}%
-                        </td>
-                        <td className="number-cell font-mono" style={{ color: '#9aa8ba' }}>
-                          {limit}%
-                        </td>
-                        <td style={{ textAlign: 'center' }}>
-                          {isOver ? (
-                            <span
-                              style={{
-                                background: 'rgba(245, 181, 68, 0.2)',
-                                color: '#f5b544',
-                                border: '1px solid rgba(245, 181, 68, 0.4)',
-                                fontSize: '10px',
-                                fontWeight: 700,
-                                padding: '2px 8px',
-                                borderRadius: '4px',
-                                textTransform: 'uppercase',
-                              }}
-                            >
-                              OVER (+{overPts}pt)
-                            </span>
-                          ) : (
-                            <span
-                              style={{
-                                background: 'rgba(49, 211, 138, 0.15)',
-                                color: '#31d38a',
-                                border: '1px solid rgba(49, 211, 138, 0.3)',
-                                fontSize: '10px',
-                                fontWeight: 700,
-                                padding: '2px 8px',
-                                borderRadius: '4px',
-                              }}
-                            >
-                              OK
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                      return (
+                        <tr key={item.id}>
+                          <td>
+                            <div style={{ fontWeight: 600, color: '#f5f7fa' }}>{item.productName}</div>
+                            <div className="font-mono" style={{ fontSize: '11px', color: '#64748b' }}>{item.sku}</div>
+                          </td>
+                          <td className="number-cell font-mono" style={{ fontWeight: 600 }}>
+                            Qty {item.quantity}
+                          </td>
+                          <td className="number-cell font-mono" style={{ color: '#f5f7fa' }}>
+                            ${item.unitPrice.toLocaleString('en-US', { minimumFractionDigits: 0 })}
+                          </td>
+                          <td className="number-cell font-mono" style={{ color: isOver ? '#f5b544' : '#f5f7fa', fontWeight: 600 }}>
+                            {item.discountPct}%
+                          </td>
+                          <td className="number-cell font-mono" style={{ color: '#9aa8ba' }}>
+                            {limit}%
+                          </td>
+                          <td style={{ textAlign: 'center' }}>
+                            {isOver ? (
+                              <span
+                                style={{
+                                  background: 'rgba(245, 181, 68, 0.2)',
+                                  color: '#f5b544',
+                                  border: '1px solid rgba(245, 181, 68, 0.4)',
+                                  fontSize: '10px',
+                                  fontWeight: 700,
+                                  padding: '2px 8px',
+                                  borderRadius: '4px',
+                                  textTransform: 'uppercase',
+                                }}
+                              >
+                                OVER (+{overPts}pt)
+                              </span>
+                            ) : (
+                              <span
+                                style={{
+                                  background: 'rgba(49, 211, 138, 0.15)',
+                                  color: '#31d38a',
+                                  border: '1px solid rgba(49, 211, 138, 0.3)',
+                                  fontSize: '10px',
+                                  fontWeight: 700,
+                                  padding: '2px 8px',
+                                  borderRadius: '4px',
+                                }}
+                              >
+                                OK
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
