@@ -11,6 +11,30 @@ export type ModuleType =
 
 export type ViewMode = 'internal' | 'customer';
 
+export type AccountType = 'internal' | 'customer';
+
+export type UserRoleType =
+  | 'ADMIN'
+  | 'SALES_OPS_DIRECTOR'
+  | 'SALES_MANAGER'
+  | 'SALES_REP'
+  | 'FINANCE'
+  | 'CUSTOMER';
+
+export interface UserAuthData {
+  id: string;
+  email: string;
+  name: string;
+  accountType: AccountType;
+  role: UserRoleType;
+  roleTitle: string;
+  company: string;
+  customerId?: string;
+  permissions: string[];
+  token?: string;
+  avatarUrl?: string;
+}
+
 export type QuotationStatus =
   | 'draft'
   | 'pending_approval'

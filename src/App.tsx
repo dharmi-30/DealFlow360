@@ -35,19 +35,46 @@ import { ReportsView } from './components/modules/ReportsView';
 import { ProductsView } from './components/modules/ProductsView';
 import { CustomerPortalView } from './components/customer/CustomerPortalView';
 import { QuotationCreateModal } from './components/modules/QuotationCreateModal';
-import { AuthView, UserAuthData } from './components/auth/AuthView';
-import { apiFetch } from './lib/apiClient';
+import { AuthView } from './components/auth/AuthView';
+import { ProfileModal } from './components/auth/ProfileModal';
+import { UserAuthData } from './types';
 
 export const App: React.FC = () => {
-  // Authentication State (Default authenticated for seamless demo experience, or toggled)
-  const [currentUser, setCurrentUser] = useState<UserAuthData | null>({
-    email: 'rahul@dealflow360.com',
-    name: 'Rahul Sharma',
-    role: 'internal',
-    company: 'DealFlow360 Operations',
+  // Authentication State with localStorage Persistence & Session Security
+  const [currentUser, setCurrentUser] = useState<UserAuthData | null>(() => {
+    try {
+      const saved = localStorage.getItem('df360_user_session');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
   });
 
-  const [viewMode, setViewMode] = useState<ViewMode>('internal');
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
+  // Sync currentUser session to localStorage
+  useEffect(() => {
+    try {
+      if (currentUser) {
+        localStorage.setItem('df360_user_session', JSON.stringify(currentUser));
+      } else {
+        localStorage.removeItem('df360_user_session');
+      }
+    } catch {}
+  }, [currentUser]);
+
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    return currentUser?.accountType === 'customer' ? 'customer' : 'internal';
+  });
+
+  const handleSetViewMode = (mode: ViewMode) => {
+    if (currentUser?.accountType === 'customer' && mode === 'internal') {
+      addToast('error', 'Access Denied', 'Customer accounts are restricted to the Customer Portal.');
+      return;
+    }
+    setViewMode(mode);
+  };
+
   const [activeModule, setActiveModule] = useState<ModuleType>('dashboard');
   const [activeQuotationForPortal, setActiveQuotationForPortal] = useState<string | undefined>(undefined);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -124,27 +151,6 @@ export const App: React.FC = () => {
     try { localStorage.setItem('df360_invoices', JSON.stringify(invoices)); } catch {}
   }, [invoices]);
 
-  // Attempt async sync with FastAPI PostgreSQL endpoints when authenticated
-  useEffect(() => {
-    async function syncBackendData() {
-      if (!currentUser) return;
-      try {
-        const [apiQuotes, apiProducts, apiCustomers] = await Promise.all([
-          apiFetch<any[]>('/quotations').catch(() => null),
-          apiFetch<any[]>('/products').catch(() => null),
-          apiFetch<any[]>('/customers').catch(() => null),
-        ]);
-
-        if (apiQuotes && Array.isArray(apiQuotes) && apiQuotes.length > 0) {
-          console.log('Successfully synchronized with backend PostgreSQL quotations dataset.');
-        }
-      } catch (err) {
-        console.debug('Backend API offline or initial startup mode, using seeded schema data.');
-      }
-    }
-    syncBackendData();
-  }, [currentUser]);
-
   // Global Toast System
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isGlobalCreateModalOpen, setIsGlobalCreateModalOpen] = useState(false);
@@ -176,39 +182,25 @@ export const App: React.FC = () => {
   // Auth Handlers
   const handleLoginSuccess = (user: UserAuthData) => {
     setCurrentUser(user);
-    if (user.role === 'customer') {
+    if (user.accountType === 'customer') {
       setViewMode('customer');
-      addToast('success', `Welcome back, ${user.name}`, 'Redirected to your Acme Corp Customer Procurement Portal.');
+      addToast('success', `Welcome back, ${user.name}`, `Redirected to ${user.company} Customer Portal.`);
     } else {
       setViewMode('internal');
       setActiveModule('dashboard');
-      addToast('success', `Welcome back, ${user.name}`, 'Logged in to DealFlow360 Sales Operations Console.');
+      addToast('success', `Welcome back, ${user.name}`, `Logged in to DealFlow360 Sales Operations Console as ${user.roleTitle}.`);
     }
   };
 
   const handleLogout = () => {
     setCurrentUser(null);
+    localStorage.removeItem('df360_user_session');
     addToast('info', 'Logged Out', 'You have been safely signed out of DealFlow360.');
   };
 
   // Handler: Create Quotation
-  const handleCreateQuotation = async (newQuotation: Quotation) => {
+  const handleCreateQuotation = (newQuotation: Quotation) => {
     setQuotations((prev) => [newQuotation, ...prev]);
-
-    // Send payload asynchronously to PostgreSQL backend if token is active
-    try {
-      await apiFetch('/quotations', {
-        method: 'POST',
-        body: JSON.stringify({
-          customer_id: newQuotation.customerId,
-          items: newQuotation.items.map((item) => ({
-            product_id: item.productId,
-            quantity: item.quantity,
-            discount_percentage: item.discountPct,
-          })),
-        }),
-      }).catch(() => null);
-    } catch {}
 
     if (newQuotation.requiresApproval) {
       const newApprovalRecord: ApprovalRecord = {
@@ -278,7 +270,7 @@ export const App: React.FC = () => {
           ? {
               ...a,
               status: 'approved',
-              reviewedBy: 'Rahul Sharma (Ops Director)',
+              reviewedBy: currentUser ? `${currentUser.name} (${currentUser.roleTitle})` : 'Ops Director',
               reviewedAt: new Date().toISOString().replace('T', ' ').substring(0, 16),
               rationale,
             }
@@ -301,7 +293,7 @@ export const App: React.FC = () => {
           ? {
               ...a,
               status: 'rejected',
-              reviewedBy: 'Rahul Sharma (Ops Director)',
+              reviewedBy: currentUser ? `${currentUser.name} (${currentUser.roleTitle})` : 'Ops Director',
               reviewedAt: new Date().toISOString().replace('T', ' ').substring(0, 16),
               rationale,
             }
@@ -463,11 +455,12 @@ export const App: React.FC = () => {
       {/* Top Application Header */}
       <Header
         viewMode={viewMode}
-        setViewMode={setViewMode}
+        setViewMode={handleSetViewMode}
         onOpenSearch={() => setIsSearchOpen(true)}
         pendingApprovalsCount={pendingApprovalsCount}
         user={currentUser}
         onLogout={handleLogout}
+        onOpenProfileModal={() => setIsProfileModalOpen(true)}
       />
 
       {/* Main Body with Glass Sidebar */}
@@ -600,6 +593,11 @@ export const App: React.FC = () => {
           setActiveModule(mod);
         }}
       />
+
+      {/* User Profile Modal */}
+      {isProfileModalOpen && currentUser && (
+        <ProfileModal user={currentUser} onClose={() => setIsProfileModalOpen(false)} />
+      )}
 
       {/* Toast Notification Layer */}
       <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
