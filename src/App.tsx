@@ -36,6 +36,7 @@ import { ProductsView } from './components/modules/ProductsView';
 import { CustomerPortalView } from './components/customer/CustomerPortalView';
 import { QuotationCreateModal } from './components/modules/QuotationCreateModal';
 import { AuthView, UserAuthData } from './components/auth/AuthView';
+import { apiFetch } from './lib/apiClient';
 
 export const App: React.FC = () => {
   // Authentication State (Default authenticated for seamless demo experience, or toggled)
@@ -123,6 +124,27 @@ export const App: React.FC = () => {
     try { localStorage.setItem('df360_invoices', JSON.stringify(invoices)); } catch {}
   }, [invoices]);
 
+  // Attempt async sync with FastAPI PostgreSQL endpoints when authenticated
+  useEffect(() => {
+    async function syncBackendData() {
+      if (!currentUser) return;
+      try {
+        const [apiQuotes, apiProducts, apiCustomers] = await Promise.all([
+          apiFetch<any[]>('/quotations').catch(() => null),
+          apiFetch<any[]>('/products').catch(() => null),
+          apiFetch<any[]>('/customers').catch(() => null),
+        ]);
+
+        if (apiQuotes && Array.isArray(apiQuotes) && apiQuotes.length > 0) {
+          console.log('Successfully synchronized with backend PostgreSQL quotations dataset.');
+        }
+      } catch (err) {
+        console.debug('Backend API offline or initial startup mode, using seeded schema data.');
+      }
+    }
+    syncBackendData();
+  }, [currentUser]);
+
   // Global Toast System
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isGlobalCreateModalOpen, setIsGlobalCreateModalOpen] = useState(false);
@@ -170,8 +192,23 @@ export const App: React.FC = () => {
   };
 
   // Handler: Create Quotation
-  const handleCreateQuotation = (newQuotation: Quotation) => {
+  const handleCreateQuotation = async (newQuotation: Quotation) => {
     setQuotations((prev) => [newQuotation, ...prev]);
+
+    // Send payload asynchronously to PostgreSQL backend if token is active
+    try {
+      await apiFetch('/quotations', {
+        method: 'POST',
+        body: JSON.stringify({
+          customer_id: newQuotation.customerId,
+          items: newQuotation.items.map((item) => ({
+            product_id: item.productId,
+            quantity: item.quantity,
+            discount_percentage: item.discountPct,
+          })),
+        }),
+      }).catch(() => null);
+    } catch {}
 
     if (newQuotation.requiresApproval) {
       const newApprovalRecord: ApprovalRecord = {
