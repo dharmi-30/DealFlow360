@@ -190,7 +190,8 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
   });
 
   const productList = dynamicProductList.length > 0 ? dynamicProductList : EXTENDED_PRODUCTS;
-  const [selectedProduct, setSelectedProduct] = useState<DetailedProductItem>(productList[0]);
+  const [selectedProductId, setSelectedProductId] = useState<string>(() => productList[0]?.id || 'prod-1');
+  const selectedProduct = productList.find((p) => p.id === selectedProductId) || productList[0];
 
   // Discount Configuration Editable State
   const [tierLimits, setTierLimits] = useState({
@@ -270,7 +271,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
       ],
     };
 
-    setSelectedProduct(detailedItem);
+    setSelectedProductId(createdProduct.id);
     setIsCreateModalOpen(false);
     setSaveNotice(`Product "${createdProduct.name}" (${createdProduct.sku}) created and added to commercial catalog.`);
     setTimeout(() => setSaveNotice(null), 4000);
@@ -586,7 +587,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                 </thead>
                 <tbody>
                   {productList.map((item) => {
-                    const isSelected = item.id === selectedProduct.id;
+                    const isSelected = item.id === selectedProductId || item.id === selectedProduct?.id;
                     const isChecked = selectedProductIds.includes(item.id);
                     const isInactive = item.status === 'Inactive' || item.status === 'Discontinued' || item.status === 'Draft';
 
@@ -594,9 +595,10 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                       <tr
                         key={item.id}
                         className={`clickable ${isSelected ? 'row-selected' : ''}`}
-                        onClick={() => setSelectedProduct(item)}
+                        onClick={() => setSelectedProductId(item.id)}
                         style={{
                           background: isChecked ? 'rgba(47, 140, 255, 0.18)' : isSelected ? 'rgba(47, 140, 255, 0.12)' : undefined,
+                          cursor: 'pointer',
                         }}
                       >
                         <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
@@ -607,7 +609,12 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                             style={{ cursor: 'pointer', accentColor: '#2f8cff', width: '15px', height: '15px' }}
                           />
                         </td>
-                        <td style={{ fontWeight: 700, color: '#f5f7fa' }}>{item.name}</td>
+                        <td
+                          style={{ fontWeight: 700, color: isSelected ? '#38d9ff' : '#f5f7fa', cursor: 'pointer' }}
+                          onClick={() => setSelectedProductId(item.id)}
+                        >
+                          {item.name}
+                        </td>
                         <td>
                           <span className="badge-glass badge-glass-neutral">{item.category}</span>
                         </td>
@@ -631,7 +638,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                             className="btn-glass btn-glass-secondary btn-sm"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setSelectedProduct(item);
+                              setSelectedProductId(item.id);
                             }}
                           >
                             Inspect <ChevronRight size={12} />
