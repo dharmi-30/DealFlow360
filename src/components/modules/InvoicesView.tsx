@@ -223,13 +223,28 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
               borderTop: '1px solid rgba(255,255,255,0.06)',
             }}
           >
-            {selectedInvoice.status !== 'paid' && (
-              <button
-                className="btn-glass btn-glass-success"
-                onClick={() => onMarkPaid(selectedInvoice.id)}
-              >
-                <CreditCard size={14} /> Record Payment
-              </button>
+            {selectedInvoice.status !== 'paid' ? (
+              <>
+                <button
+                  className="btn-glass btn-glass-secondary"
+                  style={{ background: 'rgba(56, 217, 255, 0.12)', borderColor: 'rgba(56, 217, 255, 0.3)', color: '#38d9ff' }}
+                  onClick={() => onMarkPaid(selectedInvoice.id)}
+                >
+                  <CreditCard size={14} /> Record Payment
+                </button>
+
+                <button
+                  className="btn-glass btn-glass-success"
+                  onClick={() => onMarkPaid(selectedInvoice.id)}
+                  title="Finance Department sign-off confirming deal payment receipt"
+                >
+                  <CheckCircle2 size={14} /> Approve Payment (Finance Officer)
+                </button>
+              </>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#31d38a', fontSize: '13px', fontWeight: 600 }}>
+                <CheckCircle2 size={16} /> Payment Approved & Verified by Finance Department
+              </div>
             )}
           </div>
         </div>
