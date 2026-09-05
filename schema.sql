@@ -431,6 +431,16 @@ CREATE INDEX idx_deal_events_actor_id ON deal_events(actor_id);
 CREATE INDEX idx_deal_events_event_type ON deal_events(event_type);
 CREATE INDEX idx_deal_events_created_at ON deal_events(created_at);
 
+CREATE TABLE deal_events (
+    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    quotation_id UUID NOT NULL REFERENCES quotations(id) ON DELETE CASCADE,
+    actor_id     UUID REFERENCES users(id),
+    event_type   VARCHAR(100) NOT NULL, -- e.g., DISPATCH_RELEASED
+    description  TEXT NOT NULL,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+
 
 -- =============================================================================
 -- SEED DEMO DATA INSERTS
@@ -543,3 +553,14 @@ INSERT INTO deal_events (id, quotation_id, actor_id, event_type, description) VA
 ('e2222222-9c0b-4ef8-bb6d-6bb9bd380a11', 'f2eebc99-9c0b-4ef8-bb6d-6bb9bd380a66', 'b5eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', 'APPROVAL_GRANTED', 'Quotation QT-2026-8495 approved by Alex Morgan.'),
 ('e3333333-9c0b-4ef8-bb6d-6bb9bd380a11', 'f4eebc99-9c0b-4ef8-bb6d-6bb9bd380a66', NULL, 'COUNTER_OFFER_RECEIVED', 'Acme Corp submitted counter offer with 12% target setup discount.');
 
+-- Approvals Sign-Off
+INSERT INTO approvals (id, quotation_id, approver_id, approval_role, status, comments) VALUES
+('11111111-9c0b-4ef8-bb6d-6bb9bd380a88', 'f3eebc99-9c0b-4ef8-bb6d-6bb9bd380a66', 'b5eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', 'SALES_MANAGER', 'PENDING', 'Discount 15.0% requires manager approval');
+
+-- Negotiation Messages
+INSERT INTO negotiations (id, quotation_id, quote_item_id, actor_id, actor_type, requested_quantity, requested_discount_percent, proposed_total, notes) VALUES
+('33333333-3333-4ef8-bb6d-6bb9bd380a11', 'f3eebc99-9c0b-4ef8-bb6d-6bb9bd380a66', NULL, NULL, 'CUSTOMER', 5, 15.00, 9750.00, 'Requested 15% discount on bulk hardware order.');
+
+-- Deal Events Audit Trail
+INSERT INTO deal_events (id, quotation_id, actor_id, event_type, description) VALUES
+('e4444444-9c0b-4ef8-bb6d-6bb9bd380a11', 'f3eebc99-9c0b-4ef8-bb6d-6bb9bd380a66', 'b2eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', 'QUOTE_CREATED', 'Quotation Q-1015 created and line items configured.');
