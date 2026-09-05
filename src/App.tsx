@@ -476,6 +476,7 @@ export const App: React.FC = () => {
         <main className="main-viewport" style={{ maxWidth: viewMode === 'customer' ? '100vw' : 'calc(100vw - 240px)' }}>
           {viewMode === 'customer' ? (
             <CustomerPortalView
+              currentUser={currentUser}
               quotations={quotations}
               activeQuotationId={activeQuotationForPortal}
               onCustomerSubmitCounter={handleCustomerSubmitCounter}
