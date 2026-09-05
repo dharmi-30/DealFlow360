@@ -38,16 +38,12 @@ import { QuotationCreateModal } from './components/modules/QuotationCreateModal'
 import { AuthView } from './components/auth/AuthView';
 import { ProfileModal } from './components/auth/ProfileModal';
 import { UserAuthData } from './types';
+import { getActiveJwtSession, logoutJwtSession } from './services/authService';
 
 export const App: React.FC = () => {
-  // Authentication State with localStorage Persistence & Session Security
+  // Authentication State with Real JWT Token Session Validation
   const [currentUser, setCurrentUser] = useState<UserAuthData | null>(() => {
-    try {
-      const saved = localStorage.getItem('df360_user_session');
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
+    return getActiveJwtSession();
   });
 
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -193,9 +189,9 @@ export const App: React.FC = () => {
   };
 
   const handleLogout = () => {
+    logoutJwtSession();
     setCurrentUser(null);
-    localStorage.removeItem('df360_user_session');
-    addToast('info', 'Logged Out', 'You have been safely signed out of DealFlow360.');
+    addToast('info', 'Logged Out', 'Your real JWT session has been terminated.');
   };
 
   // Handler: Create Quotation

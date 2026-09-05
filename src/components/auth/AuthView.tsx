@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Layers, ArrowRight, Lock, Mail, User, Building, ShieldCheck, CheckCircle2, KeyRound, Briefcase, UserCheck } from 'lucide-react';
+import { Layers, ArrowRight, Lock, Mail, User, Building, CheckCircle2, KeyRound, Briefcase, UserCheck } from 'lucide-react';
 import { UserAuthData, AccountType, UserRoleType } from '../../types';
+import { authenticateWithJwt } from '../../services/authService';
 
 interface AuthViewProps {
   onLoginSuccess: (user: UserAuthData) => void;
@@ -131,23 +132,32 @@ export const AuthView: React.FC<AuthViewProps> = ({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setErrorMessage(null);
 
-    setTimeout(() => {
-      setIsLoading(false);
+    if (mode === 'forgot_password') {
+      setTimeout(() => {
+        setIsLoading(false);
+        setIsResetSent(true);
+      }, 500);
+      return;
+    }
 
-      if (mode === 'login' || mode === 'signup') {
-        // Find matching predefined persona or construct dynamic user auth data
-        const matchedPersona = DEMO_PERSONAS[accountType].find(
-          (p) => p.email.toLowerCase() === email.toLowerCase()
-        );
+    try {
+      // Find matching predefined persona metadata if selected
+      const matchedPersona = DEMO_PERSONAS[accountType].find(
+        (p) => p.email.toLowerCase() === email.toLowerCase()
+      );
 
-        let roleTitle = 'User';
-        let role: UserRoleType = accountType === 'customer' ? 'CUSTOMER' : internalRole;
+      let role: UserRoleType = accountType === 'customer' ? 'CUSTOMER' : internalRole;
+      let roleTitle = 'User';
 
+      if (matchedPersona) {
+        role = matchedPersona.role;
+        roleTitle = matchedPersona.roleTitle;
+      } else {
         if (accountType === 'customer') {
           roleTitle = 'Customer';
         } else {
@@ -157,29 +167,27 @@ export const AuthView: React.FC<AuthViewProps> = ({
           else if (role === 'FINANCE') roleTitle = 'Finance Controller';
           else if (role === 'ADMIN') roleTitle = 'System Administrator';
         }
-
-        const userObj: UserAuthData = {
-          id: matchedPersona ? `usr-${matchedPersona.email.split('@')[0]}` : `usr-${Date.now()}`,
-          email,
-          name: fullName || matchedPersona?.name || (accountType === 'internal' ? 'Sales Ops User' : 'Customer Account'),
-          accountType,
-          role: matchedPersona ? matchedPersona.role : role,
-          roleTitle: matchedPersona ? matchedPersona.roleTitle : roleTitle,
-          company: accountType === 'customer' ? (companyName || matchedPersona?.company || 'Acme Corp') : 'DealFlow360 Operations',
-          customerId: matchedPersona?.customerId || (accountType === 'customer' ? 'c1eebc99-9c0b-4ef8-bb6d-6bb9bd380a33' : undefined),
-          permissions: matchedPersona
-            ? matchedPersona.permissions
-            : accountType === 'customer'
-            ? ['view_portal_quotes', 'counter_offer', 'accept_quote', 'view_invoices']
-            : ['create_quotes', 'view_all_quotes', 'approve_quotes'],
-          token: `jwt-session-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-        };
-
-        onLoginSuccess(userObj);
-      } else if (mode === 'forgot_password') {
-        setIsResetSent(true);
       }
-    }, 500);
+
+      // Perform Real Cryptographic JWT Authentication (Web Crypto API + FastAPI Sync)
+      const authResult = await authenticateWithJwt({
+        email,
+        password,
+        accountType,
+        fullName: fullName || matchedPersona?.name,
+        companyName: accountType === 'customer' ? (companyName || matchedPersona?.company) : 'DealFlow360 Operations',
+        role,
+        roleTitle,
+        customerId: matchedPersona?.customerId,
+        permissions: matchedPersona?.permissions,
+      });
+
+      setIsLoading(false);
+      onLoginSuccess(authResult.user);
+    } catch (err: any) {
+      setIsLoading(false);
+      setErrorMessage(err.message || 'Authentication failed. Please check credentials.');
+    }
   };
 
   return (
