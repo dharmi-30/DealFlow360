@@ -190,8 +190,8 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
   });
 
   const productList = dynamicProductList.length > 0 ? dynamicProductList : EXTENDED_PRODUCTS;
-  const [selectedProductId, setSelectedProductId] = useState<string>(() => productList[0]?.id || 'prod-1');
-  const selectedProduct = productList.find((p) => p.id === selectedProductId) || productList[0];
+  const [selectedProduct, setSelectedProduct] = useState<DetailedProductItem | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   // Discount Configuration Editable State
   const [tierLimits, setTierLimits] = useState({
@@ -271,7 +271,8 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
       ],
     };
 
-    setSelectedProductId(createdProduct.id);
+    setSelectedProduct(detailedItem);
+    setIsDetailModalOpen(true);
     setIsCreateModalOpen(false);
     setSaveNotice(`Product "${createdProduct.name}" (${createdProduct.sku}) created and added to commercial catalog.`);
     setTimeout(() => setSaveNotice(null), 4000);
@@ -587,7 +588,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                 </thead>
                 <tbody>
                   {productList.map((item) => {
-                    const isSelected = item.id === selectedProductId || item.id === selectedProduct?.id;
+                    const isSelected = Boolean(selectedProduct && item.id === selectedProduct.id);
                     const isChecked = selectedProductIds.includes(item.id);
                     const isInactive = item.status === 'Inactive' || item.status === 'Discontinued' || item.status === 'Draft';
 
@@ -595,10 +596,12 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                       <tr
                         key={item.id}
                         className={`clickable ${isSelected ? 'row-selected' : ''}`}
-                        onClick={() => setSelectedProductId(item.id)}
+                        onClick={() => {
+                          setSelectedProduct(item);
+                          setIsDetailModalOpen(true);
+                        }}
                         style={{
                           background: isChecked ? 'rgba(47, 140, 255, 0.18)' : isSelected ? 'rgba(47, 140, 255, 0.12)' : undefined,
-                          cursor: 'pointer',
                         }}
                       >
                         <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
@@ -609,12 +612,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                             style={{ cursor: 'pointer', accentColor: '#2f8cff', width: '15px', height: '15px' }}
                           />
                         </td>
-                        <td
-                          style={{ fontWeight: 700, color: isSelected ? '#38d9ff' : '#f5f7fa', cursor: 'pointer' }}
-                          onClick={() => setSelectedProductId(item.id)}
-                        >
-                          {item.name}
-                        </td>
+                        <td style={{ fontWeight: 700, color: '#f5f7fa' }}>{item.name}</td>
                         <td>
                           <span className="badge-glass badge-glass-neutral">{item.category}</span>
                         </td>
@@ -638,7 +636,8 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                             className="btn-glass btn-glass-secondary btn-sm"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setSelectedProductId(item.id);
+                              setSelectedProduct(item);
+                              setIsDetailModalOpen(true);
                             }}
                           >
                             Inspect <ChevronRight size={12} />
@@ -652,122 +651,205 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
             </div>
           </div>
 
-          {/* PRODUCT DETAIL INSPECTOR PANEL */}
-          {selectedProduct && (
-            <div className="glass-panel" style={{ padding: '24px' }}>
+          {/* PRODUCT DETAIL POPUP BOX / MODAL */}
+          {isDetailModalOpen && selectedProduct && (
+            <div
+              className="modal-backdrop"
+              onClick={() => setIsDetailModalOpen(false)}
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'rgba(5, 12, 24, 0.84)',
+                backdropFilter: 'blur(8px)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 1000,
+                padding: '20px',
+              }}
+            >
               <div
+                className="glass-panel"
+                onClick={(e) => e.stopPropagation()}
                 style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  paddingBottom: '16px',
-                  borderBottom: '1px solid rgba(255,255,255,0.06)',
-                  marginBottom: '20px',
+                  width: '100%',
+                  maxWidth: '920px',
+                  maxHeight: '90vh',
+                  overflowY: 'auto',
+                  borderRadius: '16px',
+                  border: '1px solid rgba(47, 140, 255, 0.3)',
+                  background: 'linear-gradient(145deg, rgba(13, 25, 48, 0.96) 0%, rgba(7, 16, 33, 0.98) 100%)',
+                  boxShadow: '0 25px 60px rgba(0, 0, 0, 0.7)',
+                  padding: '28px',
                 }}
               >
-                <div>
-                  <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#f5f7fa', margin: 0 }}>
-                    Product Detail: {selectedProduct.name}
-                  </h3>
-                  <div style={{ fontSize: '12px', color: '#9aa8ba', marginTop: '2px' }}>
-                    Category: <strong style={{ color: '#f5f7fa' }}>{selectedProduct.category}</strong>
+                {/* Modal Header */}
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    paddingBottom: '16px',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                    marginBottom: '20px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div
+                      style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '10px',
+                        background: 'rgba(47, 140, 255, 0.16)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#2f8cff',
+                      }}
+                    >
+                      <Package size={22} />
+                    </div>
+                    <div>
+                      <h3 style={{ fontSize: '19px', fontWeight: 800, color: '#ffffff', margin: 0 }}>
+                        Product Detail: {selectedProduct.name}
+                      </h3>
+                      <div style={{ fontSize: '12px', color: '#9aa8ba', marginTop: '2px' }}>
+                        Category: <strong style={{ color: '#f5f7fa' }}>{selectedProduct.category}</strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div className="font-mono" style={{ fontSize: '20px', fontWeight: 800, color: '#31d38a' }}>
+                      ${selectedProduct.price.toLocaleString('en-US', { minimumFractionDigits: 2 })} / {selectedProduct.unit}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsDetailModalOpen(false)}
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.06)',
+                        border: '1px solid rgba(255, 255, 255, 0.12)',
+                        color: '#9aa8ba',
+                        cursor: 'pointer',
+                        padding: '6px',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <X size={20} />
+                    </button>
                   </div>
                 </div>
 
-                <div className="font-mono" style={{ fontSize: '20px', fontWeight: 800, color: '#31d38a' }}>
-                  ${selectedProduct.price.toLocaleString('en-US', { minimumFractionDigits: 2 })} / {selectedProduct.unit}
+                {/* FIELDS GRID */}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gap: '16px',
+                    background: 'rgba(255,255,255,0.02)',
+                    padding: '18px',
+                    borderRadius: '10px',
+                    border: '1px solid var(--border-glass)',
+                    marginBottom: '24px',
+                    fontSize: '13px',
+                  }}
+                >
+                  <div>Product Name: <strong style={{ color: '#f5f7fa' }}>{selectedProduct.name}</strong></div>
+                  <div>Category: <strong style={{ color: '#f5f7fa' }}>{selectedProduct.category}</strong></div>
+                  <div>Base List Price: <strong className="font-mono" style={{ color: '#38d9ff' }}>${selectedProduct.price.toFixed(2)}</strong></div>
+
+                  <div>Unit: <strong style={{ color: '#f5f7fa' }}>{selectedProduct.unit}</strong></div>
+                  <div>Tax %: <strong className="font-mono" style={{ color: '#f5f7fa' }}>{selectedProduct.taxPct}%</strong></div>
+                  <div>Quantity on Hand: <strong className="font-mono" style={{ color: '#31d38a' }}>{selectedProduct.quantityOnHand} units</strong></div>
+
+                  <div>Subscription: <strong style={{ color: selectedProduct.isSubscription ? '#38d9ff' : '#9aa8ba' }}>{selectedProduct.isSubscription ? 'Yes' : 'No'}</strong></div>
+                  <div>Recurring Cycle: <strong style={{ color: '#f5f7fa' }}>{selectedProduct.recurringCycle}</strong></div>
+                  <div>Status: <span className={`badge-glass ${selectedProduct.status === 'Inactive' ? 'badge-glass-warning' : 'badge-glass-success'}`}>{selectedProduct.status}</span></div>
+
+                  <div style={{ gridColumn: 'span 3', color: '#9aa8ba', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                    Description: <span style={{ color: '#f5f7fa' }}>{selectedProduct.description}</span>
+                  </div>
                 </div>
-              </div>
 
-              {/* FIELDS GRID */}
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(3, 1fr)',
-                  gap: '16px',
-                  background: 'rgba(255,255,255,0.02)',
-                  padding: '16px',
-                  borderRadius: '8px',
-                  border: '1px solid var(--border-glass)',
-                  marginBottom: '24px',
-                  fontSize: '13px',
-                }}
-              >
-                <div>Product Name: <strong style={{ color: '#f5f7fa' }}>{selectedProduct.name}</strong></div>
-                <div>Category: <strong style={{ color: '#f5f7fa' }}>{selectedProduct.category}</strong></div>
-                <div>Base List Price: <strong className="font-mono" style={{ color: '#38d9ff' }}>${selectedProduct.price.toFixed(2)}</strong></div>
+                {/* SECTIONS: PRODUCT VARIANTS & COMMERCIAL PRICE LISTS */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+                  {/* SECTION 1: PRODUCT VARIANTS */}
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '18px', borderRadius: '10px', border: '1px solid var(--border-glass)' }}>
+                    <h4 style={{ fontSize: '13px', textTransform: 'uppercase', color: '#38d9ff', fontWeight: 700, marginBottom: '12px', margin: 0 }}>
+                      Product Variants
+                    </h4>
 
-                <div>Unit: <strong style={{ color: '#f5f7fa' }}>{selectedProduct.unit}</strong></div>
-                <div>Tax %: <strong className="font-mono" style={{ color: '#f5f7fa' }}>{selectedProduct.taxPct}%</strong></div>
-                <div>Quantity on Hand: <strong className="font-mono" style={{ color: '#31d38a' }}>{selectedProduct.quantityOnHand} units</strong></div>
-
-                <div>Subscription: <strong style={{ color: selectedProduct.isSubscription ? '#38d9ff' : '#9aa8ba' }}>{selectedProduct.isSubscription ? 'Yes' : 'No'}</strong></div>
-                <div>Recurring Cycle: <strong style={{ color: '#f5f7fa' }}>{selectedProduct.recurringCycle}</strong></div>
-                <div style={{ gridColumn: 'span 3', color: '#9aa8ba', paddingTop: '6px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                  Description: <span style={{ color: '#f5f7fa' }}>{selectedProduct.description}</span>
-                </div>
-              </div>
-
-              {/* SECTIONS: PRODUCT VARIANTS & PRICE LISTS */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                {/* SECTION 1: PRODUCT VARIANTS */}
-                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border-glass)' }}>
-                  <h4 style={{ fontSize: '13px', textTransform: 'uppercase', color: '#38d9ff', fontWeight: 700, marginBottom: '12px', margin: 0 }}>
-                    Product Variants
-                  </h4>
-
-                  <div className="table-glass-wrapper">
-                    <table className="table-glass" style={{ fontSize: '12px' }}>
-                      <thead>
-                        <tr>
-                          <th>Variant Spec</th>
-                          <th>SKU</th>
-                          <th className="number-cell">Price</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedProduct.variants.map((v, idx) => (
-                          <tr key={idx}>
-                            <td style={{ fontWeight: 600, color: '#f5f7fa' }}>{v.name}</td>
-                            <td className="font-mono" style={{ color: '#9aa8ba' }}>{v.sku}</td>
-                            <td className="number-cell font-mono" style={{ fontWeight: 700 }}>
-                              ${v.price.toFixed(2)}
-                            </td>
+                    <div className="table-glass-wrapper">
+                      <table className="table-glass" style={{ fontSize: '12px' }}>
+                        <thead>
+                          <tr>
+                            <th>Variant Spec</th>
+                            <th>SKU</th>
+                            <th className="number-cell">Price</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {selectedProduct.variants.map((v, idx) => (
+                            <tr key={idx}>
+                              <td style={{ fontWeight: 600, color: '#f5f7fa' }}>{v.name}</td>
+                              <td className="font-mono" style={{ color: '#9aa8ba' }}>{v.sku}</td>
+                              <td className="number-cell font-mono" style={{ fontWeight: 700 }}>
+                                ${v.price.toFixed(2)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* SECTION 2: PRICE LISTS */}
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '18px', borderRadius: '10px', border: '1px solid var(--border-glass)' }}>
+                    <h4 style={{ fontSize: '13px', textTransform: 'uppercase', color: '#31d38a', fontWeight: 700, marginBottom: '12px', margin: 0 }}>
+                      Commercial Price Lists
+                    </h4>
+
+                    <div className="table-glass-wrapper">
+                      <table className="table-glass" style={{ fontSize: '12px' }}>
+                        <thead>
+                          <tr>
+                            <th>Price List Tier</th>
+                            <th className="number-cell">Discount %</th>
+                            <th className="number-cell">Net Price</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedProduct.priceLists.map((pl, idx) => (
+                            <tr key={idx}>
+                              <td style={{ fontWeight: 600, color: '#f5f7fa' }}>{pl.name}</td>
+                              <td className="number-cell font-mono" style={{ color: '#f5b544' }}>{pl.discountPct}%</td>
+                              <td className="number-cell font-mono" style={{ fontWeight: 700, color: '#31d38a' }}>
+                                ${pl.netPrice.toFixed(2)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
 
-                {/* SECTION 2: PRICE LISTS */}
-                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border-glass)' }}>
-                  <h4 style={{ fontSize: '13px', textTransform: 'uppercase', color: '#31d38a', fontWeight: 700, marginBottom: '12px', margin: 0 }}>
-                    Commercial Price Lists
-                  </h4>
-
-                  <div className="table-glass-wrapper">
-                    <table className="table-glass" style={{ fontSize: '12px' }}>
-                      <thead>
-                        <tr>
-                          <th>Price List Tier</th>
-                          <th className="number-cell">Discount %</th>
-                          <th className="number-cell">Net Price</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedProduct.priceLists.map((pl, idx) => (
-                          <tr key={idx}>
-                            <td style={{ fontWeight: 600, color: '#f5f7fa' }}>{pl.name}</td>
-                            <td className="number-cell font-mono" style={{ color: '#f5b544' }}>{pl.discountPct}%</td>
-                            <td className="number-cell font-mono" style={{ fontWeight: 700, color: '#31d38a' }}>
-                              ${pl.netPrice.toFixed(2)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                {/* Modal Footer */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', paddingTop: '14px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                  <button
+                    type="button"
+                    className="btn-glass btn-glass-secondary"
+                    onClick={() => setIsDetailModalOpen(false)}
+                    style={{ padding: '8px 20px', fontSize: '13px' }}
+                  >
+                    Close Inspector
+                  </button>
                 </div>
               </div>
             </div>
