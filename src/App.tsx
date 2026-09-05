@@ -130,6 +130,25 @@ export const App: React.FC = () => {
     });
     addToast('success', 'Products Deleted', `Permanently deleted ${productIds.length} product(s) from database.`);
   };
+
+  const handleUpdateProduct = (updatedProduct: Product) => {
+    setProducts((prev) => {
+      const exists = prev.some((p) => p.id === updatedProduct.id);
+      let updated: Product[];
+      if (exists) {
+        updated = prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p));
+      } else {
+        updated = [updatedProduct, ...prev];
+      }
+      try {
+        localStorage.setItem('df360_products', JSON.stringify(updated));
+      } catch (err) {
+        console.error('Failed to save products to localStorage:', err);
+      }
+      return updated;
+    });
+    addToast('success', 'Product Updated', `Successfully updated "${updatedProduct.name}" (${updatedProduct.sku}).`);
+  };
   
   const [quotations, setQuotations] = useState<Quotation[]>(() => {
     try {
@@ -609,6 +628,7 @@ export const App: React.FC = () => {
                   onAddProduct={handleAddProduct}
                   onArchiveProducts={handleArchiveProducts}
                   onDeleteProducts={handleDeleteProducts}
+                  onUpdateProduct={handleUpdateProduct}
                 />
               )}
             </>

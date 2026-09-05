@@ -17,6 +17,7 @@ import {
   X,
   Archive,
   Trash2,
+  Edit,
 } from 'lucide-react';
 
 interface ProductsViewProps {
@@ -24,6 +25,7 @@ interface ProductsViewProps {
   onAddProduct?: (product: Product) => void;
   onArchiveProducts?: (productIds: string[]) => void;
   onDeleteProducts?: (productIds: string[]) => void;
+  onUpdateProduct?: (product: Product) => void;
 }
 
 interface DetailedProductItem {
@@ -143,9 +145,12 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
   onAddProduct,
   onArchiveProducts,
   onDeleteProducts,
+  onUpdateProduct,
 }) => {
   const [activeTab, setActiveTab] = useState<'catalog' | 'discount-config'>('catalog');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingProductItem, setEditingProductItem] = useState<DetailedProductItem | null>(null);
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [statusOverrides, setStatusOverrides] = useState<Record<string, 'Active' | 'Inactive' | 'Archived'>>({});
 
@@ -160,6 +165,81 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
     inStock: '100',
     description: '',
   });
+
+  const [editProductForm, setEditProductForm] = useState({
+    id: '',
+    name: '',
+    sku: '',
+    category: 'Hardware',
+    listPrice: '',
+    cogs: '',
+    minMarginPct: '20.0',
+    defaultDiscountPct: '5.0',
+    inStock: '100',
+    description: '',
+    status: 'Active',
+  });
+
+  const handleOpenEditModal = (item: DetailedProductItem) => {
+    const rawProd = products.find((p) => p.id === item.id);
+    setEditingProductItem(item);
+    setEditProductForm({
+      id: item.id,
+      name: item.name,
+      sku: (item as any).sku || rawProd?.sku || `SKU-${item.id.toUpperCase()}`,
+      category: item.category,
+      listPrice: item.price.toString(),
+      cogs: ((item as any).cogs ?? rawProd?.cogs ?? Math.round(item.price * 0.65)).toString(),
+      minMarginPct: ((item as any).minMarginPct ?? rawProd?.minMarginPct ?? 20.0).toString(),
+      defaultDiscountPct: ((item as any).defaultDiscountPct ?? rawProd?.defaultDiscountPct ?? 5.0).toString(),
+      inStock: (item.quantityOnHand ?? rawProd?.inStock ?? 100).toString(),
+      description: item.description || rawProd?.description || '',
+      status: item.status || rawProd?.status || 'Active',
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditProductSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editProductForm.id || !editProductForm.name || !editProductForm.sku || !editProductForm.listPrice) return;
+
+    const listPriceNum = parseFloat(editProductForm.listPrice) || 0;
+    const cogsNum = parseFloat(editProductForm.cogs || '0') || 0;
+    const minMarginNum = parseFloat(editProductForm.minMarginPct || '20.0') || 0;
+    const defaultDiscountNum = parseFloat(editProductForm.defaultDiscountPct || '5.0') || 0;
+    const inStockNum = parseInt(editProductForm.inStock || '100', 10) || 0;
+    const categoryVal = editProductForm.category as any;
+    const statusVal = editProductForm.status as 'Active' | 'Inactive' | 'Archived';
+
+    const updatedProduct: Product = {
+      id: editProductForm.id,
+      sku: editProductForm.sku.toUpperCase().trim(),
+      name: editProductForm.name.trim(),
+      category: categoryVal,
+      description: editProductForm.description.trim() || `${editProductForm.name} - Commercial Catalog Product`,
+      listPrice: listPriceNum,
+      cogs: cogsNum,
+      minMarginPct: minMarginNum,
+      defaultDiscountPct: defaultDiscountNum,
+      upsellIds: [],
+      crossSellIds: [],
+      inStock: inStockNum,
+      status: statusVal,
+    };
+
+    setStatusOverrides((prev) => ({
+      ...prev,
+      [updatedProduct.id]: statusVal,
+    }));
+
+    if (onUpdateProduct) {
+      onUpdateProduct(updatedProduct);
+    }
+
+    setIsEditModalOpen(false);
+    setSaveNotice(`Product "${updatedProduct.name}" (${updatedProduct.sku}) updated successfully.`);
+    setTimeout(() => setSaveNotice(null), 4000);
+  };
 
   // Convert schema.sql parsed products into detailed view items
   const dynamicProductList: DetailedProductItem[] = products.map((p) => {
@@ -632,16 +712,40 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                           )}
                         </td>
                         <td className="number-cell">
-                          <button
-                            className="btn-glass btn-glass-secondary btn-sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedProduct(item);
-                              setIsDetailModalOpen(true);
-                            }}
-                          >
-                            Inspect <ChevronRight size={12} />
-                          </button>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px' }}>
+                            <button
+                              type="button"
+                              className="btn-glass btn-glass-primary btn-sm"
+                              style={{
+                                padding: '4px 10px',
+                                fontSize: '11px',
+                                background: 'rgba(47, 140, 255, 0.2)',
+                                border: '1px solid rgba(47, 140, 255, 0.4)',
+                                color: '#38d9ff',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenEditModal(item);
+                              }}
+                            >
+                              <Edit size={12} /> Edit
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-glass btn-glass-secondary btn-sm"
+                              style={{ padding: '4px 10px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedProduct(item);
+                                setIsDetailModalOpen(true);
+                              }}
+                            >
+                              Inspect <ChevronRight size={12} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -842,6 +946,26 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
 
                 {/* Modal Footer */}
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', paddingTop: '14px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                  <button
+                    type="button"
+                    className="btn-glass btn-glass-primary"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '8px 16px',
+                      fontSize: '13px',
+                      background: 'rgba(47, 140, 255, 0.25)',
+                      border: '1px solid rgba(47, 140, 255, 0.5)',
+                      color: '#38d9ff',
+                    }}
+                    onClick={() => {
+                      setIsDetailModalOpen(false);
+                      handleOpenEditModal(selectedProduct);
+                    }}
+                  >
+                    <Edit size={14} /> Edit Product Values
+                  </button>
                   <button
                     type="button"
                     className="btn-glass btn-glass-secondary"
@@ -1196,6 +1320,243 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                   }}
                 >
                   Save Product to Catalog
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT PRODUCT MODAL OVERLAY */}
+      {isEditModalOpen && editingProductItem && (
+        <div
+          className="modal-backdrop"
+          onClick={() => setIsEditModalOpen(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(5, 12, 24, 0.84)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px',
+          }}
+        >
+          <div
+            className="glass-panel"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: '580px',
+              borderRadius: '14px',
+              border: '1px solid rgba(47, 140, 255, 0.35)',
+              background: 'linear-gradient(145deg, rgba(13, 25, 48, 0.96) 0%, rgba(7, 16, 33, 0.98) 100%)',
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.7)',
+              padding: '24px',
+            }}
+          >
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingBottom: '14px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(47, 140, 255, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38d9ff' }}>
+                  <Edit size={20} />
+                </div>
+                <div>
+                  <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#ffffff', margin: 0 }}>
+                    Edit Product Values
+                  </h2>
+                  <span style={{ fontSize: '12px', color: '#9aa8ba' }}>Modify catalog parameters for {editProductForm.name}</span>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsEditModalOpen(false)}
+                style={{ background: 'transparent', border: 'none', color: '#9aa8ba', cursor: 'pointer', padding: '4px', borderRadius: '6px' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleEditProductSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '14px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
+                    Product Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    className="input-glass"
+                    style={{ width: '100%', padding: '9px 12px', fontSize: '13px' }}
+                    value={editProductForm.name}
+                    onChange={(e) => setEditProductForm({ ...editProductForm, name: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
+                    SKU Code *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    className="input-glass"
+                    style={{ width: '100%', padding: '9px 12px', fontSize: '13px', textTransform: 'uppercase' }}
+                    value={editProductForm.sku}
+                    onChange={(e) => setEditProductForm({ ...editProductForm, sku: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
+                    Category *
+                  </label>
+                  <select
+                    className="input-glass-select"
+                    style={{ width: '100%', padding: '9px 12px', fontSize: '13px' }}
+                    value={editProductForm.category}
+                    onChange={(e) => setEditProductForm({ ...editProductForm, category: e.target.value })}
+                  >
+                    <option value="Hardware">Hardware</option>
+                    <option value="Software Subscription">Software Subscription</option>
+                    <option value="Professional Services">Professional Services</option>
+                    <option value="Support">Support</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
+                    List Price ($) *
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    className="input-glass"
+                    style={{ width: '100%', padding: '9px 12px', fontSize: '13px' }}
+                    value={editProductForm.listPrice}
+                    onChange={(e) => setEditProductForm({ ...editProductForm, listPrice: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
+                    Status *
+                  </label>
+                  <select
+                    className="input-glass-select"
+                    style={{ width: '100%', padding: '9px 12px', fontSize: '13px' }}
+                    value={editProductForm.status}
+                    onChange={(e) => setEditProductForm({ ...editProductForm, status: e.target.value })}
+                  >
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                    <option value="Archived">Archived</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '10px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#9aa8ba', marginBottom: '6px' }}>
+                    Unit COGS ($)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    className="input-glass"
+                    style={{ width: '100%', padding: '8px 10px', fontSize: '12px' }}
+                    value={editProductForm.cogs}
+                    onChange={(e) => setEditProductForm({ ...editProductForm, cogs: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#9aa8ba', marginBottom: '6px' }}>
+                    Min Margin (%)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    className="input-glass"
+                    style={{ width: '100%', padding: '8px 10px', fontSize: '12px' }}
+                    value={editProductForm.minMarginPct}
+                    onChange={(e) => setEditProductForm({ ...editProductForm, minMarginPct: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#9aa8ba', marginBottom: '6px' }}>
+                    Default Disc (%)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    className="input-glass"
+                    style={{ width: '100%', padding: '8px 10px', fontSize: '12px' }}
+                    value={editProductForm.defaultDiscountPct}
+                    onChange={(e) => setEditProductForm({ ...editProductForm, defaultDiscountPct: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#9aa8ba', marginBottom: '6px' }}>
+                    In-Stock Qty
+                  </label>
+                  <input
+                    type="number"
+                    className="input-glass"
+                    style={{ width: '100%', padding: '8px 10px', fontSize: '12px' }}
+                    value={editProductForm.inStock}
+                    onChange={(e) => setEditProductForm({ ...editProductForm, inStock: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
+                  Description & Specifications
+                </label>
+                <textarea
+                  rows={3}
+                  className="input-glass"
+                  style={{ width: '100%', padding: '9px 12px', fontSize: '13px', resize: 'vertical' }}
+                  value={editProductForm.description}
+                  onChange={(e) => setEditProductForm({ ...editProductForm, description: e.target.value })}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                <button
+                  type="button"
+                  className="btn-glass btn-glass-secondary"
+                  onClick={() => setIsEditModalOpen(false)}
+                  style={{ padding: '8px 16px', fontSize: '13px' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn-glass btn-glass-primary"
+                  style={{
+                    padding: '8px 20px',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    background: 'linear-gradient(135deg, #2f8cff 0%, #0056b3 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Save Product Changes
                 </button>
               </div>
             </form>
