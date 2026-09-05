@@ -6,7 +6,8 @@ export type ModuleType =
   | 'subscriptions'
   | 'invoices'
   | 'reports'
-  | 'products';
+  | 'products'
+  | 'deal-health';
 
 export type ViewMode = 'internal' | 'customer';
 
@@ -139,6 +140,7 @@ export interface Quotation {
   deliveryRequestDate?: string;
   customerComments?: string;
   negotiationHistory: NegotiationMessage[];
+  shippingAddress?: string;
 }
 
 export interface ApprovalRecord {

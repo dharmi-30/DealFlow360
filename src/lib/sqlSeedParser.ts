@@ -5,6 +5,7 @@ import {
   Quotation,
   ApprovalRecord,
   FulfillmentRecord,
+  FulfillmentStatus,
   SubscriptionRecord,
   InvoiceRecord,
   DealHealthScore,
@@ -232,6 +233,7 @@ export function parseSchemaSqlSeedData() {
         : 0,
       deliveryRequestDate: '2026-09-20',
       customerComments: 'Parsed live from PostgreSQL schema.sql seed queries.',
+      shippingAddress: cust?.address || '100 Industrial Parkway, Suite 400, Dallas, TX 75201',
       items,
       negotiationHistory: negHistory,
     };
