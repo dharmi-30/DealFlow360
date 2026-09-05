@@ -1381,7 +1381,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                     type="text"
                     required
                     className="input-glass"
-                    style={{ width: '100%', padding: '9px 12px', fontSize: '13px' }}
+                    style={{ width: '100%', padding: '9px 12px', fontSize: '13px', background: 'rgba(7, 16, 33, 0.95)', color: '#ffffff', border: '1px solid rgba(47, 140, 255, 0.4)' }}
                     value={editProductForm.name}
                     onChange={(e) => setEditProductForm({ ...editProductForm, name: e.target.value })}
                   />
@@ -1395,7 +1395,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                     type="text"
                     required
                     className="input-glass"
-                    style={{ width: '100%', padding: '9px 12px', fontSize: '13px', textTransform: 'uppercase' }}
+                    style={{ width: '100%', padding: '9px 12px', fontSize: '13px', textTransform: 'uppercase', background: 'rgba(7, 16, 33, 0.95)', color: '#ffffff', border: '1px solid rgba(47, 140, 255, 0.4)' }}
                     value={editProductForm.sku}
                     onChange={(e) => setEditProductForm({ ...editProductForm, sku: e.target.value })}
                   />
@@ -1409,7 +1409,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                   </label>
                   <select
                     className="input-glass-select"
-                    style={{ width: '100%', padding: '9px 12px', fontSize: '13px' }}
+                    style={{ width: '100%', padding: '9px 12px', fontSize: '13px', background: 'rgba(7, 16, 33, 0.95)', color: '#ffffff', border: '1px solid rgba(47, 140, 255, 0.4)' }}
                     value={editProductForm.category}
                     onChange={(e) => setEditProductForm({ ...editProductForm, category: e.target.value })}
                   >
@@ -1429,7 +1429,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                     step="0.01"
                     required
                     className="input-glass"
-                    style={{ width: '100%', padding: '9px 12px', fontSize: '13px' }}
+                    style={{ width: '100%', padding: '9px 12px', fontSize: '13px', background: 'rgba(7, 16, 33, 0.95)', color: '#ffffff', border: '1px solid rgba(47, 140, 255, 0.4)' }}
                     value={editProductForm.listPrice}
                     onChange={(e) => setEditProductForm({ ...editProductForm, listPrice: e.target.value })}
                   />
@@ -1441,7 +1441,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                   </label>
                   <select
                     className="input-glass-select"
-                    style={{ width: '100%', padding: '9px 12px', fontSize: '13px' }}
+                    style={{ width: '100%', padding: '9px 12px', fontSize: '13px', background: 'rgba(7, 16, 33, 0.95)', color: '#ffffff', border: '1px solid rgba(47, 140, 255, 0.4)' }}
                     value={editProductForm.status}
                     onChange={(e) => setEditProductForm({ ...editProductForm, status: e.target.value })}
                   >
@@ -1461,7 +1461,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                     type="number"
                     step="0.01"
                     className="input-glass"
-                    style={{ width: '100%', padding: '8px 10px', fontSize: '12px' }}
+                    style={{ width: '100%', padding: '8px 10px', fontSize: '12px', background: 'rgba(7, 16, 33, 0.95)', color: '#ffffff', border: '1px solid rgba(47, 140, 255, 0.4)' }}
                     value={editProductForm.cogs}
                     onChange={(e) => setEditProductForm({ ...editProductForm, cogs: e.target.value })}
                   />
@@ -1475,7 +1475,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                     type="number"
                     step="0.1"
                     className="input-glass"
-                    style={{ width: '100%', padding: '8px 10px', fontSize: '12px' }}
+                    style={{ width: '100%', padding: '8px 10px', fontSize: '12px', background: 'rgba(7, 16, 33, 0.95)', color: '#ffffff', border: '1px solid rgba(47, 140, 255, 0.4)' }}
                     value={editProductForm.minMarginPct}
                     onChange={(e) => setEditProductForm({ ...editProductForm, minMarginPct: e.target.value })}
                   />
@@ -1489,7 +1489,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                     type="number"
                     step="0.1"
                     className="input-glass"
-                    style={{ width: '100%', padding: '8px 10px', fontSize: '12px' }}
+                    style={{ width: '100%', padding: '8px 10px', fontSize: '12px', background: 'rgba(7, 16, 33, 0.95)', color: '#ffffff', border: '1px solid rgba(47, 140, 255, 0.4)' }}
                     value={editProductForm.defaultDiscountPct}
                     onChange={(e) => setEditProductForm({ ...editProductForm, defaultDiscountPct: e.target.value })}
                   />
@@ -1502,7 +1502,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                   <input
                     type="number"
                     className="input-glass"
-                    style={{ width: '100%', padding: '8px 10px', fontSize: '12px' }}
+                    style={{ width: '100%', padding: '8px 10px', fontSize: '12px', background: 'rgba(7, 16, 33, 0.95)', color: '#ffffff', border: '1px solid rgba(47, 140, 255, 0.4)' }}
                     value={editProductForm.inStock}
                     onChange={(e) => setEditProductForm({ ...editProductForm, inStock: e.target.value })}
                   />
@@ -1516,7 +1516,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                 <textarea
                   rows={3}
                   className="input-glass"
-                  style={{ width: '100%', padding: '9px 12px', fontSize: '13px', resize: 'vertical' }}
+                  style={{ width: '100%', padding: '9px 12px', fontSize: '13px', resize: 'vertical', background: 'rgba(7, 16, 33, 0.95)', color: '#ffffff', border: '1px solid rgba(47, 140, 255, 0.4)' }}
                   value={editProductForm.description}
                   onChange={(e) => setEditProductForm({ ...editProductForm, description: e.target.value })}
                 />

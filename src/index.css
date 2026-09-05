@@ -597,13 +597,37 @@ input, select, textarea {
   color: var(--text-primary);
 }
 
+.input-glass {
+  padding: 8px 12px;
+  border: 1px solid rgba(47, 140, 255, 0.35);
+  border-radius: var(--radius-sm);
+  background: rgba(7, 16, 33, 0.92);
+  color: #ffffff;
+  outline: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input-glass:focus {
+  border-color: #2f8cff;
+  box-shadow: 0 0 0 2px rgba(47, 140, 255, 0.25);
+  background: rgba(13, 25, 48, 0.98);
+}
+
+.input-glass::placeholder {
+  color: #64748b;
+}
+
 .input-glass-select {
   padding: 7px 10px;
-  border: 1px solid var(--border-glass-light);
+  border: 1px solid rgba(47, 140, 255, 0.35);
   border-radius: var(--radius-sm);
-  background: var(--bg-glass-input);
-  color: var(--text-primary);
+  background: rgba(7, 16, 33, 0.92);
+  color: #ffffff;
   outline: none;
+  font-weight: 600;
 }
 
 .input-glass-select:focus {
