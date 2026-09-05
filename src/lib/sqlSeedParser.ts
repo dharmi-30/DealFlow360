@@ -150,20 +150,27 @@ export function parseSchemaSqlSeedData() {
   }));
 
   // 2. PRODUCTS
-  const products: Product[] = rawProducts.map((p, idx) => ({
-    id: `prod-${idx + 1}`,
-    sku: p.sku,
-    name: p.name,
-    category: p.category || 'General',
-    description: p.description || '',
-    listPrice: Number(p.unit_price),
-    cogs: Number(p.unit_cost),
-    minMarginPct: p.category === 'Professional Services' ? 35.0 : p.category === 'Support' ? 50.0 : 18.0,
-    defaultDiscountPct: p.category === 'Hardware' ? 5.0 : 0.0,
-    upsellIds: idx === 0 ? ['prod-3', 'prod-5'] : [],
-    crossSellIds: idx === 0 ? ['prod-4', 'prod-2'] : [],
-    inStock: p.is_subscription ? 999 : 420,
-  }));
+  const products: Product[] = rawProducts.map((p, idx) => {
+    const qtyHand = p.quantity_on_hand !== undefined && p.quantity_on_hand !== null ? Number(p.quantity_on_hand) : (p.is_subscription ? 999 : ((idx * 23) % 450) + 45);
+    const unitMeasure = p.unit_of_measure || p.unit || (p.category?.includes('Subscription') || p.category?.includes('Support') ? 'Contract' : p.category?.includes('Services') ? 'Session' : 'Unit');
+    return {
+      id: `prod-${idx + 1}`,
+      sku: p.sku,
+      name: p.name,
+      category: p.category || 'General',
+      description: p.description || '',
+      listPrice: Number(p.unit_price),
+      cogs: Number(p.unit_cost),
+      minMarginPct: p.category === 'Professional Services' ? 35.0 : p.category === 'Support' ? 50.0 : 18.0,
+      defaultDiscountPct: p.category === 'Hardware' ? 5.0 : 0.0,
+      upsellIds: idx === 0 ? ['prod-3', 'prod-5'] : [],
+      crossSellIds: idx === 0 ? ['prod-4', 'prod-2'] : [],
+      inStock: qtyHand,
+      unitOfMeasure: unitMeasure,
+      quantityOnHand: qtyHand,
+      status: p.active === false ? 'Inactive' : 'Active',
+    };
+  });
 
   const productMap = new Map<string, Product>();
   products.forEach((p, idx) => {

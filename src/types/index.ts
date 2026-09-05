@@ -73,7 +73,7 @@ export interface Product {
   id: string;
   sku: string;
   name: string;
-  category: 'Hardware' | 'Software Subscription' | 'Professional Services' | 'Support';
+  category: 'Hardware' | 'Software Subscription' | 'Professional Services' | 'Support' | string;
   description: string;
   listPrice: number;
   cogs: number; // Cost of Goods Sold
@@ -82,6 +82,8 @@ export interface Product {
   upsellIds: string[];
   crossSellIds: string[];
   inStock: number;
+  unitOfMeasure?: string;
+  quantityOnHand?: number;
   status?: 'Active' | 'Inactive' | 'Archived';
 }
 

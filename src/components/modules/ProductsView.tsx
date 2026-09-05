@@ -189,6 +189,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
     minMarginPct: '20.0',
     defaultDiscountPct: '5.0',
     inStock: '100',
+    unitOfMeasure: 'Unit',
     description: '',
     status: 'Active',
   });
@@ -206,6 +207,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
       minMarginPct: ((item as any).minMarginPct ?? rawProd?.minMarginPct ?? 20.0).toString(),
       defaultDiscountPct: ((item as any).defaultDiscountPct ?? rawProd?.defaultDiscountPct ?? 5.0).toString(),
       inStock: (item.quantityOnHand ?? rawProd?.inStock ?? 100).toString(),
+      unitOfMeasure: item.unit || (rawProd as any)?.unitOfMeasure || 'Unit',
       description: item.description || rawProd?.description || '',
       status: item.status || rawProd?.status || 'Active',
     });
@@ -237,6 +239,8 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
       upsellIds: [],
       crossSellIds: [],
       inStock: inStockNum,
+      unitOfMeasure: editProductForm.unitOfMeasure,
+      quantityOnHand: inStockNum,
       status: statusVal,
     };
 
@@ -257,22 +261,24 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
   // Convert schema.sql parsed products into detailed view items
   const dynamicProductList: DetailedProductItem[] = products.map((p) => {
     const statusVal = statusOverrides[p.id] || p.status || 'Active';
+    const unitVal = p.unitOfMeasure || (p as any).unit || (p.category.includes('Subscription') || p.category.includes('Support') ? 'Contract' : p.category.includes('Services') ? 'Session' : 'Unit');
+    const stockVal = p.quantityOnHand !== undefined ? p.quantityOnHand : (p.inStock || 100);
     return {
       id: p.id,
       name: p.name,
       category: p.category || 'Hardware',
       variantsCount: 3,
       price: p.listPrice,
-      unit: p.category.includes('Subscription') || p.category.includes('Support') ? 'Contract' : p.category.includes('Services') ? 'Session' : 'Unit',
+      unit: unitVal,
       taxPct: p.category.includes('Services') ? 0.0 : 8.5,
       status: statusVal as any,
       description: p.description || `${p.name} - Enterprise Commercial Grade Product`,
       isSubscription: p.category.includes('Subscription') || p.category.includes('Support'),
       recurringCycle: p.category.includes('Subscription') || p.category.includes('Support') ? 'Monthly' : 'N/A',
-      quantityOnHand: p.inStock || 100,
+      quantityOnHand: stockVal,
       variants: [
-        { name: `${p.name} (Base Configuration)`, sku: p.sku, price: p.listPrice, stock: Math.round((p.inStock || 100) * 0.6) },
-        { name: `${p.name} (Enterprise Spec)`, sku: `${p.sku}-ENT`, price: Math.round(p.listPrice * 1.25), stock: Math.round((p.inStock || 100) * 0.4) },
+        { name: `${p.name} (Base Configuration)`, sku: p.sku, price: p.listPrice, stock: Math.round(stockVal * 0.6) },
+        { name: `${p.name} (Enterprise Spec)`, sku: `${p.sku}-ENT`, price: Math.round(p.listPrice * 1.25), stock: Math.round(stockVal * 0.4) },
       ],
       priceLists: [
         { name: 'Standard Commercial List', discountPct: 0, netPrice: p.listPrice },
@@ -521,8 +527,8 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
       {/* TAB 1: PRODUCT DASHBOARD & DETAIL */}
       {activeTab === 'catalog' && (
         <>
-          {/* TOP SUMMARY CARDS (Total Products, Price Lists, Variants) */}
-          <div className="kpi-row" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+          {/* TOP SUMMARY CARDS (Total Products, Total Stock Units, Price Lists, Variants) */}
+          <div className="kpi-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
             <div className="kpi-glass-card">
               <div className="kpi-head">
                 <span className="kpi-label">Total Products</span>
@@ -536,13 +542,24 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
 
             <div className="kpi-glass-card">
               <div className="kpi-head">
-                <span className="kpi-label">Price Lists</span>
-                <Tag size={16} style={{ color: '#31d38a' }} />
+                <span className="kpi-label">Total Stock Units</span>
+                <Sliders size={16} style={{ color: '#31d38a' }} />
               </div>
               <div className="kpi-main-val" style={{ color: '#31d38a' }}>
+                {productList.reduce((acc, p) => acc + (p.quantityOnHand || 100), 0).toLocaleString()} Units
+              </div>
+              <div className="kpi-sub-label">Total catalog stock quantity</div>
+            </div>
+
+            <div className="kpi-glass-card">
+              <div className="kpi-head">
+                <span className="kpi-label">Price Lists</span>
+                <Tag size={16} style={{ color: '#2f8cff' }} />
+              </div>
+              <div className="kpi-main-val" style={{ color: '#2f8cff' }}>
                 3 Price Lists
               </div>
-              <div className="kpi-sub-label">Standard, Enterprise, GSA Schedule</div>
+              <div className="kpi-sub-label">Standard, Enterprise, GSA</div>
             </div>
 
             <div className="kpi-glass-card">
@@ -837,6 +854,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                     <th className="number-cell">Variants</th>
                     <th className="number-cell">Price</th>
                     <th>Unit</th>
+                    <th className="number-cell">Units In Stock</th>
                     <th className="number-cell">Tax</th>
                     <th>Status</th>
                     <th className="number-cell">Action</th>
@@ -845,7 +863,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                 <tbody>
                   {filteredProducts.length === 0 ? (
                     <tr>
-                      <td colSpan={9} style={{ textAlign: 'center', padding: '36px 16px', color: '#9aa8ba' }}>
+                      <td colSpan={10} style={{ textAlign: 'center', padding: '36px 16px', color: '#9aa8ba' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                           <Search size={28} style={{ color: '#2f8cff', opacity: 0.6 }} />
                           <span style={{ fontSize: '14px', fontWeight: 600, color: '#cbd5e1' }}>
@@ -891,6 +909,9 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                           ${item.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                         </td>
                         <td style={{ fontSize: '12px', color: '#9aa8ba' }}>{item.unit}</td>
+                        <td className="number-cell font-mono" style={{ color: '#31d38a', fontWeight: 600 }}>
+                          {item.quantityOnHand.toLocaleString()}
+                        </td>
                         <td className="number-cell font-mono">{item.taxPct.toFixed(1)}%</td>
                         <td>
                           {isInactive ? (
@@ -1646,7 +1667,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '10px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', gap: '10px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#9aa8ba', marginBottom: '6px' }}>
                     Unit COGS ($)
@@ -1659,6 +1680,30 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                     value={editProductForm.cogs}
                     onChange={(e) => setEditProductForm({ ...editProductForm, cogs: e.target.value })}
                   />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#9aa8ba', marginBottom: '6px' }}>
+                    Unit Measure
+                  </label>
+                  <select
+                    className="input-glass-select"
+                    style={{ width: '100%', padding: '8px 4px', fontSize: '12px', background: 'rgba(7, 16, 33, 0.95)', color: '#ffffff', border: '1px solid rgba(47, 140, 255, 0.4)' }}
+                    value={editProductForm.unitOfMeasure}
+                    onChange={(e) => setEditProductForm({ ...editProductForm, unitOfMeasure: e.target.value })}
+                  >
+                    <option value="Unit">Unit</option>
+                    <option value="Box">Box</option>
+                    <option value="License">License</option>
+                    <option value="User Seat">User Seat</option>
+                    <option value="Contract">Contract</option>
+                    <option value="Session">Session</option>
+                    <option value="Rack">Rack</option>
+                    <option value="Pack">Pack</option>
+                    <option value="Set">Set</option>
+                    <option value="Pair">Pair</option>
+                    <option value="Node">Node</option>
+                  </select>
                 </div>
 
                 <div>
@@ -1691,7 +1736,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
 
                 <div>
                   <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#9aa8ba', marginBottom: '6px' }}>
-                    In-Stock Qty
+                    Stock Units
                   </label>
                   <input
                     type="number"
