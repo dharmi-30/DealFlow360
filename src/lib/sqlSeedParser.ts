@@ -29,53 +29,81 @@ function parseTableInserts(sql: string, tableName: string): ParsedRow[] {
 
   const columnsStr = match[1];
   const valuesBlock = match[2].trim();
-
   const columns = columnsStr.split(',').map((c) => c.trim().toLowerCase());
 
-  // Parse individual value tuples: ('v1', 'v2', 123, true, NULL)
   const rows: ParsedRow[] = [];
-  const tupleRegex = /\(([^)]+)\)/g;
-  let tupleMatch;
 
-  while ((tupleMatch = tupleRegex.exec(valuesBlock)) !== null) {
-    const rawTuple = tupleMatch[1];
-    const parsedValues: any[] = [];
-    
-    // Regex for SQL literals: strings in single quotes, numbers, booleans, NULL
-    const valRegex = /'((?:''|[^'])*)'|([^,\s]+)/g;
-    let valMatch;
+  let inString = false;
+  let currentTuple = '';
+  let insideTuple = false;
 
-    while ((valMatch = valRegex.exec(rawTuple)) !== null) {
-      if (valMatch[1] !== undefined) {
-        // String value (unescape double single-quotes if any)
-        parsedValues.push(valMatch[1].replace(/''/g, "'"));
-      } else {
-        const rawVal = valMatch[2].trim();
-        if (rawVal.toUpperCase() === 'NULL') {
-          parsedValues.push(null);
-        } else if (rawVal.toLowerCase() === 'true') {
-          parsedValues.push(true);
-        } else if (rawVal.toLowerCase() === 'false') {
-          parsedValues.push(false);
-        } else if (!isNaN(Number(rawVal))) {
-          parsedValues.push(Number(rawVal));
-        } else {
-          parsedValues.push(rawVal);
+  for (let i = 0; i < valuesBlock.length; i++) {
+    const char = valuesBlock[i];
+    const nextChar = valuesBlock[i + 1];
+
+    if (char === "'") {
+      if (inString && nextChar === "'") {
+        currentTuple += "''";
+        i++; // skip escaped quote
+        continue;
+      }
+      inString = !inString;
+      if (insideTuple) currentTuple += char;
+      continue;
+    }
+
+    if (!inString) {
+      if (char === '(' && !insideTuple) {
+        insideTuple = true;
+        currentTuple = '';
+        continue;
+      }
+      if (char === ')' && insideTuple) {
+        insideTuple = false;
+
+        const parsedValues: any[] = [];
+        const valRegex = /'((?:''|[^'])*)'|([^,\s]+)/g;
+        let valMatch;
+
+        while ((valMatch = valRegex.exec(currentTuple)) !== null) {
+          if (valMatch[1] !== undefined) {
+            parsedValues.push(valMatch[1].replace(/''/g, "'"));
+          } else {
+            const rawVal = valMatch[2].trim();
+            if (rawVal.toUpperCase() === 'NULL') {
+              parsedValues.push(null);
+            } else if (rawVal.toLowerCase() === 'true') {
+              parsedValues.push(true);
+            } else if (rawVal.toLowerCase() === 'false') {
+              parsedValues.push(false);
+            } else if (!isNaN(Number(rawVal))) {
+              parsedValues.push(Number(rawVal));
+            } else {
+              parsedValues.push(rawVal);
+            }
+          }
         }
+
+        if (parsedValues.length === columns.length) {
+          const rowObj: ParsedRow = {};
+          columns.forEach((col, idx) => {
+            rowObj[col] = parsedValues[idx];
+          });
+          rows.push(rowObj);
+        }
+        currentTuple = '';
+        continue;
       }
     }
 
-    if (parsedValues.length === columns.length) {
-      const rowObj: ParsedRow = {};
-      columns.forEach((col, idx) => {
-        rowObj[col] = parsedValues[idx];
-      });
-      rows.push(rowObj);
+    if (insideTuple) {
+      currentTuple += char;
     }
   }
 
   return rows;
 }
+
 
 export function parseSchemaSqlSeedData() {
   const sql = rawSchemaSql;
