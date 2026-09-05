@@ -18,6 +18,7 @@ import {
   Archive,
   Trash2,
   Edit,
+  Search,
 } from 'lucide-react';
 
 interface ProductsViewProps {
@@ -162,6 +163,10 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [statusOverrides, setStatusOverrides] = useState<Record<string, 'Active' | 'Inactive' | 'Archived'>>({});
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+
   const [newProductForm, setNewProductForm] = useState({
     name: '',
     sku: '',
@@ -278,6 +283,22 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
   });
 
   const productList = dynamicProductList.length > 0 ? dynamicProductList : EXTENDED_PRODUCTS;
+
+  const filteredProducts = productList.filter((p) => {
+    const query = searchQuery.toLowerCase().trim();
+    const matchesSearch =
+      !query ||
+      p.name.toLowerCase().includes(query) ||
+      ((p as any).sku && (p as any).sku.toLowerCase().includes(query)) ||
+      (p.description && p.description.toLowerCase().includes(query)) ||
+      (p.category && p.category.toLowerCase().includes(query));
+
+    const matchesCategory = categoryFilter === 'all' || p.category === categoryFilter;
+    const matchesStatus = statusFilter === 'all' || p.status === statusFilter;
+
+    return matchesSearch && matchesCategory && matchesStatus;
+  });
+
   const [selectedProduct, setSelectedProduct] = useState<DetailedProductItem | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
@@ -538,13 +559,13 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
 
           {/* PRODUCT DASHBOARD TABLE */}
           <div className="glass-panel" style={{ padding: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <div>
                 <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#f5f7fa', margin: 0 }}>
-                  Product Dashboard Table ({productList.length} SKUs)
+                  Product Dashboard Table ({filteredProducts.length} of {productList.length} SKUs)
                 </h3>
                 <span style={{ fontSize: '12px', color: '#9aa8ba' }}>
-                  Select checkboxes for bulk operations or click row to view details
+                  Search catalog SKUs, select checkboxes for bulk operations, or click Edit to update values
                 </span>
               </div>
               <button
@@ -562,6 +583,153 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                 <Plus size={14} />
                 <span>Create Product</span>
               </button>
+            </div>
+
+            {/* SEARCH AND FILTER BAR */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '12px',
+                marginBottom: '16px',
+                background: 'rgba(255, 255, 255, 0.02)',
+                padding: '12px 16px',
+                borderRadius: '10px',
+                border: '1px solid var(--border-glass)',
+              }}
+            >
+              {/* Search Input Box */}
+              <div
+                style={{
+                  position: 'relative',
+                  flex: 1,
+                  minWidth: '280px',
+                  maxWidth: '480px',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                <Search
+                  size={16}
+                  style={{
+                    position: 'absolute',
+                    left: '12px',
+                    color: '#2f8cff',
+                    pointerEvents: 'none',
+                  }}
+                />
+                <input
+                  type="text"
+                  className="input-glass"
+                  placeholder="Search products by name, SKU, or category..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{
+                    width: '100%',
+                    paddingLeft: '36px',
+                    paddingRight: searchQuery ? '32px' : '12px',
+                    paddingTop: '8px',
+                    paddingBottom: '8px',
+                    fontSize: '13px',
+                    background: 'rgba(7, 16, 33, 0.95)',
+                    color: '#ffffff',
+                    border: '1px solid rgba(47, 140, 255, 0.35)',
+                    borderRadius: '8px',
+                  }}
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    style={{
+                      position: 'absolute',
+                      right: '10px',
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#9aa8ba',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '2px',
+                    }}
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+
+              {/* Filter Dropdowns */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <label style={{ fontSize: '12px', color: '#9aa8ba', fontWeight: 600 }}>Category:</label>
+                  <select
+                    className="input-glass-select"
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    style={{
+                      padding: '6px 12px',
+                      fontSize: '12px',
+                      background: 'rgba(7, 16, 33, 0.95)',
+                      color: '#ffffff',
+                      border: '1px solid rgba(47, 140, 255, 0.35)',
+                      borderRadius: '6px',
+                    }}
+                  >
+                    <option value="all">All Categories</option>
+                    {categoryOptions.map((cat) => (
+                      <option key={cat.id} value={cat.name}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <label style={{ fontSize: '12px', color: '#9aa8ba', fontWeight: 600 }}>Status:</label>
+                  <select
+                    className="input-glass-select"
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    style={{
+                      padding: '6px 12px',
+                      fontSize: '12px',
+                      background: 'rgba(7, 16, 33, 0.95)',
+                      color: '#ffffff',
+                      border: '1px solid rgba(47, 140, 255, 0.35)',
+                      borderRadius: '6px',
+                    }}
+                  >
+                    <option value="all">All Statuses</option>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                  </select>
+                </div>
+
+                {(searchQuery || categoryFilter !== 'all' || statusFilter !== 'all') && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setCategoryFilter('all');
+                      setStatusFilter('all');
+                    }}
+                    style={{
+                      fontSize: '12px',
+                      color: '#38d9ff',
+                      background: 'rgba(47, 140, 255, 0.15)',
+                      border: '1px solid rgba(47, 140, 255, 0.3)',
+                      padding: '5px 12px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Reset Filters
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* BULK ACTION BAR */}
@@ -675,7 +843,22 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {productList.map((item) => {
+                  {filteredProducts.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} style={{ textAlign: 'center', padding: '36px 16px', color: '#9aa8ba' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                          <Search size={28} style={{ color: '#2f8cff', opacity: 0.6 }} />
+                          <span style={{ fontSize: '14px', fontWeight: 600, color: '#cbd5e1' }}>
+                            No products found matching "{searchQuery}"
+                          </span>
+                          <span style={{ fontSize: '12px', color: '#64748b' }}>
+                            Try adjusting your search terms or filter selection.
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredProducts.map((item) => {
                     const isSelected = Boolean(selectedProduct && item.id === selectedProduct.id);
                     const isChecked = selectedProductIds.includes(item.id);
                     const isInactive = item.status === 'Inactive' || item.status === 'Discontinued' || item.status === 'Draft';
@@ -746,7 +929,8 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                         </td>
                       </tr>
                     );
-                  })}
+                  })
+                )}
                 </tbody>
               </table>
             </div>
