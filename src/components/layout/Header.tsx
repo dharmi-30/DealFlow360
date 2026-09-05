@@ -88,26 +88,17 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Right Controls */}
       <div className="header-right" style={{ gap: '14px' }}>
-        {/* REQUIREMENT 4: Workspace Status Pills Header Bar */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            background: 'rgba(7, 17, 31, 0.8)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '8px',
-            padding: '2px',
-          }}
-        >
+        {/* Active Portal Badge (Strictly isolated per login) */}
+        <div style={{ display: 'flex', alignItems: 'center' }}>
           {isCustomer ? (
-            /* Customer is strictly limited to Customer Portal */
+            /* Customer Portal Badge */
             <div
               style={{
-                padding: '5px 14px',
+                padding: '6px 14px',
                 fontSize: '12px',
                 fontWeight: 700,
-                borderRadius: '6px',
-                backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                borderRadius: '8px',
+                backgroundColor: 'rgba(16, 185, 129, 0.15)',
                 color: '#34d399',
                 border: '1px solid rgba(16, 185, 129, 0.3)',
                 display: 'flex',
@@ -115,49 +106,28 @@ export const Header: React.FC<HeaderProps> = ({
                 gap: '6px',
               }}
             >
-              <ExternalLink size={12} />
-              <span>Customer Portal ({user?.company || 'Acme Corp'})</span>
+              <Building size={14} />
+              <span>Customer Procurement Portal ({user?.company || 'Acme Corp'})</span>
             </div>
           ) : (
-            /* Internal User workspace selector */
-            <>
-              <button
-                className={`toggle-btn ${viewMode === 'internal' ? 'active' : ''}`}
-                onClick={() => setViewMode('internal')}
-                style={{
-                  padding: '5px 12px',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  borderRadius: '6px',
-                  backgroundColor: viewMode === 'internal' ? '#2f8cff' : 'transparent',
-                  color: viewMode === 'internal' ? '#ffffff' : '#9aa8ba',
-                  cursor: 'pointer',
-                  border: 'none',
-                }}
-              >
-                Sales Ops Console
-              </button>
-              <button
-                className={`toggle-btn ${viewMode === 'customer' ? 'active' : ''}`}
-                onClick={() => setViewMode('customer')}
-                style={{
-                  padding: '5px 12px',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  borderRadius: '6px',
-                  backgroundColor: viewMode === 'customer' ? '#10b981' : 'transparent',
-                  color: viewMode === 'customer' ? '#ffffff' : '#9aa8ba',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  cursor: 'pointer',
-                  border: 'none',
-                }}
-              >
-                <ExternalLink size={12} />
-                Customer Portal
-              </button>
-            </>
+            /* Sales Ops Console Badge */
+            <div
+              style={{
+                padding: '6px 14px',
+                fontSize: '12px',
+                fontWeight: 700,
+                borderRadius: '8px',
+                backgroundColor: 'rgba(47, 140, 255, 0.15)',
+                color: '#38d9ff',
+                border: '1px solid rgba(47, 140, 255, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              <ShieldCheck size={14} />
+              <span>Sales Ops Console</span>
+            </div>
           )}
         </div>
 
@@ -192,7 +162,7 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         )}
 
-        {/* REQUIREMENTS 2, 3, 4, 5, 8: Dynamic Authenticated Profile Badge & Dropdown in Top-Right */}
+        {/* Dynamic Authenticated Profile Badge & Dropdown in Top-Right */}
         <div style={{ position: 'relative' }} ref={dropdownRef}>
           <button
             onClick={() => setIsProfileDropdownOpen((prev) => !prev)}
@@ -248,7 +218,7 @@ export const Header: React.FC<HeaderProps> = ({
             <ChevronDown size={14} style={{ color: '#9aa8ba', marginLeft: '4px' }} />
           </button>
 
-          {/* REQUIREMENT 5: Workspace & Profile Dropdown Menu */}
+          {/* Profile Dropdown Menu */}
           {isProfileDropdownOpen && (
             <div
               className="glass-panel"
@@ -256,7 +226,7 @@ export const Header: React.FC<HeaderProps> = ({
                 position: 'absolute',
                 top: 'calc(100% + 8px)',
                 right: 0,
-                width: '260px',
+                width: '250px',
                 padding: '8px',
                 borderRadius: '12px',
                 boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(47, 140, 255, 0.15)',
@@ -324,114 +294,6 @@ export const Header: React.FC<HeaderProps> = ({
                 <User size={14} style={{ color: '#38d9ff' }} />
                 <span>My Profile & Session</span>
               </button>
-
-              <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.08)', margin: '6px 0' }} />
-
-              {/* REQUIREMENT 5: Workspace Switcher */}
-              <div style={{ fontSize: '10px', fontWeight: 700, color: '#64748b', padding: '4px 10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Workspaces
-              </div>
-
-              {/* For Authorized Internal Users: */}
-              {!isCustomer ? (
-                <>
-                  <button
-                    onClick={() => {
-                      setViewMode('internal');
-                      setIsProfileDropdownOpen(false);
-                    }}
-                    style={{
-                      width: '100%',
-                      padding: '8px 10px',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: viewMode === 'internal' ? '#38d9ff' : '#f5f7fa',
-                      background: viewMode === 'internal' ? 'rgba(47, 140, 255, 0.12)' : 'transparent',
-                      border: 'none',
-                      borderRadius: '6px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <span>Sales Ops Console</span>
-                    {viewMode === 'internal' && <Check size={14} style={{ color: '#38d9ff' }} />}
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setViewMode('internal');
-                      setIsProfileDropdownOpen(false);
-                    }}
-                    style={{
-                      width: '100%',
-                      padding: '8px 10px',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: '#9aa8ba',
-                      background: 'transparent',
-                      border: 'none',
-                      borderRadius: '6px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      cursor: 'pointer',
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                  >
-                    <span>Admin Portal</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setViewMode('customer');
-                      setIsProfileDropdownOpen(false);
-                    }}
-                    style={{
-                      width: '100%',
-                      padding: '8px 10px',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: viewMode === 'customer' ? '#34d399' : '#f5f7fa',
-                      background: viewMode === 'customer' ? 'rgba(16, 185, 129, 0.12)' : 'transparent',
-                      border: 'none',
-                      borderRadius: '6px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <span>Customer Portal</span>
-                    {viewMode === 'customer' && <Check size={14} style={{ color: '#34d399' }} />}
-                  </button>
-                </>
-              ) : (
-                /* For Customer Users: Strictly limited to Customer Portal ONLY */
-                <>
-                  <button
-                    style={{
-                      width: '100%',
-                      padding: '8px 10px',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: '#34d399',
-                      background: 'rgba(16, 185, 129, 0.12)',
-                      border: 'none',
-                      borderRadius: '6px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      cursor: 'default',
-                    }}
-                  >
-                    <span>Customer Portal</span>
-                    <Check size={14} style={{ color: '#34d399' }} />
-                  </button>
-                </>
-              )}
 
               <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.08)', margin: '6px 0' }} />
 

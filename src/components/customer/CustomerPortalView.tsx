@@ -27,7 +27,6 @@ interface CustomerPortalViewProps {
     deliveryDate?: string
   ) => void;
   onCustomerAcceptQuote: (quotationId: string) => void;
-  onBackToInternal: () => void;
 }
 
 export const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
@@ -35,7 +34,6 @@ export const CustomerPortalView: React.FC<CustomerPortalViewProps> = ({
   activeQuotationId,
   onCustomerSubmitCounter,
   onCustomerAcceptQuote,
-  onBackToInternal,
 }) => {
   const activeQuote =
     quotations.find((q) => q.id === activeQuotationId) ||

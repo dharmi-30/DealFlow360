@@ -129,7 +129,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
           <button className="btn-glass btn-glass-secondary" onClick={handlePrint}>
             <Printer size={14} /> Download Summary / Print PDF
           </button>
-          {invoice.status !== 'paid' ? (
+          {invoice.status !== 'paid' && (
             <button
               className="btn-glass btn-glass-success"
               onClick={() => {
@@ -137,12 +137,8 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
                 onClose();
               }}
             >
-              <CheckCircle2 size={15} /> Approve Payment (Finance Officer)
+              <CheckCircle2 size={15} /> Record Payment
             </button>
-          ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#31d38a', fontSize: '13px', fontWeight: 600 }}>
-              <CheckCircle2 size={16} /> Payment Approved (Finance)
-            </div>
           )}
         </div>
       </div>

@@ -65,7 +65,11 @@ export const App: React.FC = () => {
 
   const handleSetViewMode = (mode: ViewMode) => {
     if (currentUser?.accountType === 'customer' && mode === 'internal') {
-      addToast('error', 'Access Denied', 'Customer accounts are restricted to the Customer Portal.');
+      addToast('error', 'Access Denied', 'Customer accounts are strictly restricted to the Customer Portal.');
+      return;
+    }
+    if (currentUser?.accountType === 'internal' && mode === 'customer') {
+      addToast('error', 'Access Denied', 'Sales Ops accounts are strictly restricted to the Sales Ops Console.');
       return;
     }
     setViewMode(mode);
@@ -476,7 +480,6 @@ export const App: React.FC = () => {
               activeQuotationId={activeQuotationForPortal}
               onCustomerSubmitCounter={handleCustomerSubmitCounter}
               onCustomerAcceptQuote={handleCustomerAcceptQuote}
-              onBackToInternal={() => setViewMode('internal')}
             />
           ) : (
             <>

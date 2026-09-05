@@ -495,9 +495,12 @@ export const QuotationDrawer: React.FC<QuotationDrawerProps> = ({
         <div className="drawer-footer" style={{ background: 'rgba(7, 17, 31, 0.9)', borderTop: '1px solid var(--border-glass)', padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <button
             className="btn-glass btn-glass-secondary btn-sm"
-            onClick={() => onOpenCustomerPortal(quotation.id)}
+            onClick={() => {
+              navigator.clipboard.writeText(`http://localhost:5173/portal/quote/${quotation.id}`);
+              alert(`Customer portal link for ${quotation.code} copied to clipboard! Log in as customer to access the customer portal.`);
+            }}
           >
-            <ExternalLink size={13} /> Preview Buyer Portal
+            <ExternalLink size={13} /> Copy Customer Quote Link
           </button>
 
           <div style={{ display: 'flex', gap: '10px' }}>
