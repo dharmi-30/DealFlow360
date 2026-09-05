@@ -163,13 +163,13 @@ export const ProductsView: React.FC<ProductsViewProps> = ({ products = [] }) => 
   const [selectedProduct, setSelectedProduct] = useState<DetailedProductItem>(productList[0]);
 
   // Discount Configuration Editable State
-  const [tierCeilings, setTierCeilings] = useState({
+  const [tierLimits, setTierLimits] = useState({
     bronze: 5,
     silver: 10,
     gold: 15,
   });
 
-  const [categoryCeilings, setCategoryCeilings] = useState({
+  const [categoryLimits, setCategoryLimits] = useState({
     hardware: 15,
     services: 10,
   });
@@ -184,7 +184,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({ products = [] }) => 
 
   const handleSaveDiscountConfig = (e: React.FormEvent) => {
     e.preventDefault();
-    setSaveNotice('Discount ceilings and approval mapping rules updated successfully.');
+    setSaveNotice('Discount limits and approval mapping rules updated successfully.');
     setTimeout(() => setSaveNotice(null), 4000);
   };
 
@@ -493,7 +493,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({ products = [] }) => 
                 Discount Governance & Approval Configuration
               </h3>
               <p style={{ fontSize: '12px', color: '#9aa8ba', marginTop: '2px', margin: 0 }}>
-                Configure tier ceilings, category limits, and automated approval routing.
+                Configure tier limits, category limits, and automated approval routing.
               </p>
             </div>
 
@@ -503,50 +503,50 @@ export const ProductsView: React.FC<ProductsViewProps> = ({ products = [] }) => 
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', marginBottom: '24px' }}>
-            {/* TIER DISCOUNT CEILINGS */}
+            {/* TIER DISCOUNT LIMITS */}
             <div style={{ background: 'rgba(255,255,255,0.02)', padding: '18px', borderRadius: '8px', border: '1px solid var(--border-glass)' }}>
               <h4 style={{ fontSize: '13px', textTransform: 'uppercase', color: '#38d9ff', fontWeight: 700, marginBottom: '14px', margin: 0 }}>
-                Tier Discount Ceilings
+                Tier Discount Limits
               </h4>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <label style={{ fontSize: '13px', color: '#f5f7fa', fontWeight: 600 }}>Bronze Tier Ceiling</label>
+                  <label style={{ fontSize: '13px', color: '#f5f7fa', fontWeight: 600 }}>Bronze Tier Limit</label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <input
                       type="number"
                       className="input-glass-select"
                       style={{ width: '70px', textAlign: 'right' }}
-                      value={tierCeilings.bronze}
-                      onChange={(e) => setTierCeilings({ ...tierCeilings, bronze: Number(e.target.value) })}
+                      value={tierLimits.bronze}
+                      onChange={(e) => setTierLimits({ ...tierLimits, bronze: Number(e.target.value) })}
                     />
                     <span style={{ fontSize: '12px', color: '#9aa8ba' }}>%</span>
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <label style={{ fontSize: '13px', color: '#f5f7fa', fontWeight: 600 }}>Silver Tier Ceiling</label>
+                  <label style={{ fontSize: '13px', color: '#f5f7fa', fontWeight: 600 }}>Silver Tier Limit</label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <input
                       type="number"
                       className="input-glass-select"
                       style={{ width: '70px', textAlign: 'right' }}
-                      value={tierCeilings.silver}
-                      onChange={(e) => setTierCeilings({ ...tierCeilings, silver: Number(e.target.value) })}
+                      value={tierLimits.silver}
+                      onChange={(e) => setTierLimits({ ...tierLimits, silver: Number(e.target.value) })}
                     />
                     <span style={{ fontSize: '12px', color: '#9aa8ba' }}>%</span>
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <label style={{ fontSize: '13px', color: '#f5f7fa', fontWeight: 600 }}>Gold Tier Ceiling</label>
+                  <label style={{ fontSize: '13px', color: '#f5f7fa', fontWeight: 600 }}>Gold Tier Limit</label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <input
                       type="number"
                       className="input-glass-select"
                       style={{ width: '70px', textAlign: 'right' }}
-                      value={tierCeilings.gold}
-                      onChange={(e) => setTierCeilings({ ...tierCeilings, gold: Number(e.target.value) })}
+                      value={tierLimits.gold}
+                      onChange={(e) => setTierLimits({ ...tierLimits, gold: Number(e.target.value) })}
                     />
                     <span style={{ fontSize: '12px', color: '#9aa8ba' }}>%</span>
                   </div>
@@ -554,36 +554,36 @@ export const ProductsView: React.FC<ProductsViewProps> = ({ products = [] }) => 
               </div>
             </div>
 
-            {/* CATEGORY DISCOUNT CEILINGS */}
+            {/* CATEGORY DISCOUNT LIMITS */}
             <div style={{ background: 'rgba(255,255,255,0.02)', padding: '18px', borderRadius: '8px', border: '1px solid var(--border-glass)' }}>
               <h4 style={{ fontSize: '13px', textTransform: 'uppercase', color: '#f5b544', fontWeight: 700, marginBottom: '14px', margin: 0 }}>
-                Category Discount Ceilings
+                Category Discount Limits
               </h4>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <label style={{ fontSize: '13px', color: '#f5f7fa', fontWeight: 600 }}>Hardware Ceiling</label>
+                  <label style={{ fontSize: '13px', color: '#f5f7fa', fontWeight: 600 }}>Hardware Limit</label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <input
                       type="number"
                       className="input-glass-select"
                       style={{ width: '70px', textAlign: 'right' }}
-                      value={categoryCeilings.hardware}
-                      onChange={(e) => setCategoryCeilings({ ...categoryCeilings, hardware: Number(e.target.value) })}
+                      value={categoryLimits.hardware}
+                      onChange={(e) => setCategoryLimits({ ...categoryLimits, hardware: Number(e.target.value) })}
                     />
                     <span style={{ fontSize: '12px', color: '#9aa8ba' }}>%</span>
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <label style={{ fontSize: '13px', color: '#f5f7fa', fontWeight: 600 }}>Services Ceiling</label>
+                  <label style={{ fontSize: '13px', color: '#f5f7fa', fontWeight: 600 }}>Services Limit</label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <input
                       type="number"
                       className="input-glass-select"
                       style={{ width: '70px', textAlign: 'right' }}
-                      value={categoryCeilings.services}
-                      onChange={(e) => setCategoryCeilings({ ...categoryCeilings, services: Number(e.target.value) })}
+                      value={categoryLimits.services}
+                      onChange={(e) => setCategoryLimits({ ...categoryLimits, services: Number(e.target.value) })}
                     />
                     <span style={{ fontSize: '12px', color: '#9aa8ba' }}>%</span>
                   </div>
