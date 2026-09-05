@@ -102,6 +102,34 @@ export const App: React.FC = () => {
     });
     addToast('success', 'Product Created', `Added ${newProduct.name} (${newProduct.sku}) to commercial catalog.`);
   };
+
+  const handleArchiveProducts = (productIds: string[]) => {
+    setProducts((prev) => {
+      const updated = prev.map((p) =>
+        productIds.includes(p.id) ? { ...p, status: 'Inactive' as const } : p
+      );
+      try {
+        localStorage.setItem('df360_products', JSON.stringify(updated));
+      } catch (err) {
+        console.error('Failed to save products to localStorage:', err);
+      }
+      return updated;
+    });
+    addToast('info', 'Products Archived', `Status changed to Inactive for ${productIds.length} product(s).`);
+  };
+
+  const handleDeleteProducts = (productIds: string[]) => {
+    setProducts((prev) => {
+      const updated = prev.filter((p) => !productIds.includes(p.id));
+      try {
+        localStorage.setItem('df360_products', JSON.stringify(updated));
+      } catch (err) {
+        console.error('Failed to save products to localStorage:', err);
+      }
+      return updated;
+    });
+    addToast('success', 'Products Deleted', `Permanently deleted ${productIds.length} product(s) from database.`);
+  };
   
   const [quotations, setQuotations] = useState<Quotation[]>(() => {
     try {
@@ -576,7 +604,12 @@ export const App: React.FC = () => {
               )}
 
               {activeModule === 'products' && (
-                <ProductsView products={products} onAddProduct={handleAddProduct} />
+                <ProductsView
+                  products={products}
+                  onAddProduct={handleAddProduct}
+                  onArchiveProducts={handleArchiveProducts}
+                  onDeleteProducts={handleDeleteProducts}
+                />
               )}
             </>
           )}

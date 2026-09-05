@@ -15,11 +15,15 @@ import {
   Info,
   Plus,
   X,
+  Archive,
+  Trash2,
 } from 'lucide-react';
 
 interface ProductsViewProps {
   products: Product[];
   onAddProduct?: (product: Product) => void;
+  onArchiveProducts?: (productIds: string[]) => void;
+  onDeleteProducts?: (productIds: string[]) => void;
 }
 
 interface DetailedProductItem {
@@ -30,7 +34,7 @@ interface DetailedProductItem {
   price: number;
   unit: string;
   taxPct: number;
-  status: 'Active' | 'Draft' | 'Discontinued';
+  status: 'Active' | 'Inactive' | 'Draft' | 'Discontinued' | 'Archived';
   description: string;
   isSubscription: boolean;
   recurringCycle: string;
@@ -134,9 +138,17 @@ const EXTENDED_PRODUCTS: DetailedProductItem[] = [
   },
 ];
 
-export const ProductsView: React.FC<ProductsViewProps> = ({ products = [], onAddProduct }) => {
+export const ProductsView: React.FC<ProductsViewProps> = ({
+  products = [],
+  onAddProduct,
+  onArchiveProducts,
+  onDeleteProducts,
+}) => {
   const [activeTab, setActiveTab] = useState<'catalog' | 'discount-config'>('catalog');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [statusOverrides, setStatusOverrides] = useState<Record<string, 'Active' | 'Inactive' | 'Archived'>>({});
+
   const [newProductForm, setNewProductForm] = useState({
     name: '',
     sku: '',
@@ -150,29 +162,32 @@ export const ProductsView: React.FC<ProductsViewProps> = ({ products = [], onAdd
   });
 
   // Convert schema.sql parsed products into detailed view items
-  const dynamicProductList: DetailedProductItem[] = products.map((p) => ({
-    id: p.id,
-    name: p.name,
-    category: p.category || 'Hardware',
-    variantsCount: 3,
-    price: p.listPrice,
-    unit: p.category.includes('Subscription') || p.category.includes('Support') ? 'Contract' : p.category.includes('Services') ? 'Session' : 'Unit',
-    taxPct: p.category.includes('Services') ? 0.0 : 8.5,
-    status: 'Active',
-    description: p.description || `${p.name} - Enterprise Commercial Grade Product`,
-    isSubscription: p.category.includes('Subscription') || p.category.includes('Support'),
-    recurringCycle: p.category.includes('Subscription') || p.category.includes('Support') ? 'Monthly' : 'N/A',
-    quantityOnHand: p.inStock || 100,
-    variants: [
-      { name: `${p.name} (Base Configuration)`, sku: p.sku, price: p.listPrice, stock: Math.round((p.inStock || 100) * 0.6) },
-      { name: `${p.name} (Enterprise Spec)`, sku: `${p.sku}-ENT`, price: Math.round(p.listPrice * 1.25), stock: Math.round((p.inStock || 100) * 0.4) },
-    ],
-    priceLists: [
-      { name: 'Standard Commercial List', discountPct: 0, netPrice: p.listPrice },
-      { name: 'Enterprise Volume Tier', discountPct: 10, netPrice: Number((p.listPrice * 0.9).toFixed(2)) },
-      { name: 'Federal GSA Schedule', discountPct: 15, netPrice: Number((p.listPrice * 0.85).toFixed(2)) },
-    ],
-  }));
+  const dynamicProductList: DetailedProductItem[] = products.map((p) => {
+    const statusVal = statusOverrides[p.id] || p.status || 'Active';
+    return {
+      id: p.id,
+      name: p.name,
+      category: p.category || 'Hardware',
+      variantsCount: 3,
+      price: p.listPrice,
+      unit: p.category.includes('Subscription') || p.category.includes('Support') ? 'Contract' : p.category.includes('Services') ? 'Session' : 'Unit',
+      taxPct: p.category.includes('Services') ? 0.0 : 8.5,
+      status: statusVal as any,
+      description: p.description || `${p.name} - Enterprise Commercial Grade Product`,
+      isSubscription: p.category.includes('Subscription') || p.category.includes('Support'),
+      recurringCycle: p.category.includes('Subscription') || p.category.includes('Support') ? 'Monthly' : 'N/A',
+      quantityOnHand: p.inStock || 100,
+      variants: [
+        { name: `${p.name} (Base Configuration)`, sku: p.sku, price: p.listPrice, stock: Math.round((p.inStock || 100) * 0.6) },
+        { name: `${p.name} (Enterprise Spec)`, sku: `${p.sku}-ENT`, price: Math.round(p.listPrice * 1.25), stock: Math.round((p.inStock || 100) * 0.4) },
+      ],
+      priceLists: [
+        { name: 'Standard Commercial List', discountPct: 0, netPrice: p.listPrice },
+        { name: 'Enterprise Volume Tier', discountPct: 10, netPrice: Number((p.listPrice * 0.9).toFixed(2)) },
+        { name: 'Federal GSA Schedule', discountPct: 15, netPrice: Number((p.listPrice * 0.85).toFixed(2)) },
+      ],
+    };
+  });
 
   const productList = dynamicProductList.length > 0 ? dynamicProductList : EXTENDED_PRODUCTS;
   const [selectedProduct, setSelectedProduct] = useState<DetailedProductItem>(productList[0]);
@@ -257,18 +272,49 @@ export const ProductsView: React.FC<ProductsViewProps> = ({ products = [], onAdd
 
     setSelectedProduct(detailedItem);
     setIsCreateModalOpen(false);
-    setNewProductForm({
-      name: '',
-      sku: '',
-      category: 'Hardware',
-      listPrice: '',
-      cogs: '',
-      minMarginPct: '20.0',
-      defaultDiscountPct: '5.0',
-      inStock: '100',
-      description: '',
-    });
     setSaveNotice(`Product "${createdProduct.name}" (${createdProduct.sku}) created and added to commercial catalog.`);
+    setTimeout(() => setSaveNotice(null), 4000);
+  };
+
+  const isAllSelected = productList.length > 0 && productList.every((p) => selectedProductIds.includes(p.id));
+
+  const handleToggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedProductIds([]);
+    } else {
+      setSelectedProductIds(productList.map((p) => p.id));
+    }
+  };
+
+  const handleToggleSelectProduct = (id: string) => {
+    setSelectedProductIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleArchiveSelected = () => {
+    if (selectedProductIds.length === 0) return;
+    const newOverrides = { ...statusOverrides };
+    selectedProductIds.forEach((id) => {
+      newOverrides[id] = 'Inactive';
+    });
+    setStatusOverrides(newOverrides);
+
+    if (onArchiveProducts) {
+      onArchiveProducts(selectedProductIds);
+    }
+    setSaveNotice(`Archived ${selectedProductIds.length} product(s). Status updated to Inactive in database.`);
+    setSelectedProductIds([]);
+    setTimeout(() => setSaveNotice(null), 4000);
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedProductIds.length === 0) return;
+    if (onDeleteProducts) {
+      onDeleteProducts(selectedProductIds);
+    }
+    setSaveNotice(`Permanently deleted ${selectedProductIds.length} product(s) from database.`);
+    setSelectedProductIds([]);
     setTimeout(() => setSaveNotice(null), 4000);
   };
 
@@ -408,7 +454,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({ products = [], onAdd
                   Product Dashboard Table ({productList.length} SKUs)
                 </h3>
                 <span style={{ fontSize: '12px', color: '#9aa8ba' }}>
-                  Click row to view Product Detail inspector
+                  Select checkboxes for bulk operations or click row to view details
                 </span>
               </div>
               <button
@@ -428,10 +474,106 @@ export const ProductsView: React.FC<ProductsViewProps> = ({ products = [], onAdd
               </button>
             </div>
 
+            {/* BULK ACTION BAR */}
+            {selectedProductIds.length > 0 && (
+              <div
+                style={{
+                  background: 'linear-gradient(135deg, rgba(13, 25, 48, 0.95) 0%, rgba(20, 35, 60, 0.95) 100%)',
+                  border: '1px solid rgba(47, 140, 255, 0.4)',
+                  borderRadius: '10px',
+                  padding: '10px 18px',
+                  marginBottom: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span className="badge-glass badge-glass-info" style={{ fontSize: '12px', fontWeight: 700, padding: '4px 10px' }}>
+                    {selectedProductIds.length} selected
+                  </span>
+                  <span style={{ fontSize: '12px', color: '#cbd5e1', fontWeight: 500 }}>
+                    Select an action for highlighted product SKUs:
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  {/* Archive Button */}
+                  <button
+                    type="button"
+                    onClick={handleArchiveSelected}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      background: 'rgba(245, 181, 68, 0.16)',
+                      color: '#f5b544',
+                      border: '1px solid rgba(245, 181, 68, 0.4)',
+                      fontWeight: 700,
+                      fontSize: '12px',
+                      padding: '6px 14px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <Archive size={14} />
+                    <span>Archive (Set Inactive)</span>
+                  </button>
+
+                  {/* Delete Button */}
+                  <button
+                    type="button"
+                    onClick={handleDeleteSelected}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      background: 'rgba(255, 107, 114, 0.18)',
+                      color: '#ff6b72',
+                      border: '1px solid rgba(255, 107, 114, 0.45)',
+                      fontWeight: 700,
+                      fontSize: '12px',
+                      padding: '6px 14px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <Trash2 size={14} />
+                    <span>Delete Permanently</span>
+                  </button>
+
+                  {/* Cancel Button */}
+                  <button
+                    type="button"
+                    onClick={() => setSelectedProductIds([])}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#9aa8ba',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      padding: '4px 8px',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="table-glass-wrapper">
               <table className="table-glass">
                 <thead>
                   <tr>
+                    <th style={{ width: '40px', textAlign: 'center' }}>
+                      <input
+                        type="checkbox"
+                        checked={isAllSelected}
+                        onChange={handleToggleSelectAll}
+                        style={{ cursor: 'pointer', accentColor: '#2f8cff', width: '15px', height: '15px' }}
+                      />
+                    </th>
                     <th>Product</th>
                     <th>Category</th>
                     <th className="number-cell">Variants</th>
@@ -445,15 +587,26 @@ export const ProductsView: React.FC<ProductsViewProps> = ({ products = [], onAdd
                 <tbody>
                   {productList.map((item) => {
                     const isSelected = item.id === selectedProduct.id;
+                    const isChecked = selectedProductIds.includes(item.id);
+                    const isInactive = item.status === 'Inactive' || item.status === 'Discontinued' || item.status === 'Draft';
+
                     return (
                       <tr
                         key={item.id}
                         className={`clickable ${isSelected ? 'row-selected' : ''}`}
                         onClick={() => setSelectedProduct(item)}
                         style={{
-                          background: isSelected ? 'rgba(47, 140, 255, 0.12)' : undefined,
+                          background: isChecked ? 'rgba(47, 140, 255, 0.18)' : isSelected ? 'rgba(47, 140, 255, 0.12)' : undefined,
                         }}
                       >
+                        <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => handleToggleSelectProduct(item.id)}
+                            style={{ cursor: 'pointer', accentColor: '#2f8cff', width: '15px', height: '15px' }}
+                          />
+                        </td>
                         <td style={{ fontWeight: 700, color: '#f5f7fa' }}>{item.name}</td>
                         <td>
                           <span className="badge-glass badge-glass-neutral">{item.category}</span>
@@ -465,7 +618,13 @@ export const ProductsView: React.FC<ProductsViewProps> = ({ products = [], onAdd
                         <td style={{ fontSize: '12px', color: '#9aa8ba' }}>{item.unit}</td>
                         <td className="number-cell font-mono">{item.taxPct.toFixed(1)}%</td>
                         <td>
-                          <span className="badge-glass badge-glass-success">{item.status}</span>
+                          {isInactive ? (
+                            <span className="badge-glass" style={{ background: 'rgba(245, 181, 68, 0.15)', color: '#f5b544', border: '1px solid rgba(245,181,68,0.3)' }}>
+                              Inactive
+                            </span>
+                          ) : (
+                            <span className="badge-glass badge-glass-success">Active</span>
+                          )}
                         </td>
                         <td className="number-cell">
                           <button

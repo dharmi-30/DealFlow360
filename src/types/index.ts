@@ -77,6 +77,7 @@ export interface Product {
   upsellIds: string[];
   crossSellIds: string[];
   inStock: number;
+  status?: 'Active' | 'Inactive' | 'Archived';
 }
 
 export interface Customer {
