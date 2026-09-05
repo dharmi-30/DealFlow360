@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Product, Category } from '../../types';
 import {
   Package,
@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   Settings2,
   ChevronRight,
+  ChevronLeft,
   Shield,
   Save,
   Sparkles,
@@ -166,6 +167,8 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(15);
 
   const [newProductForm, setNewProductForm] = useState({
     name: '',
@@ -304,6 +307,12 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
 
     return matchesSearch && matchesCategory && matchesStatus;
   });
+
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage) || 1;
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredProducts.slice(start, start + itemsPerPage);
+  }, [filteredProducts, currentPage, itemsPerPage]);
 
   const [selectedProduct, setSelectedProduct] = useState<DetailedProductItem | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -642,7 +651,10 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                   className="input-glass"
                   placeholder="Search products by name, SKU, or category..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setCurrentPage(1);
+                  }}
                   style={{
                     width: '100%',
                     paddingLeft: '36px',
@@ -659,7 +671,10 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                 {searchQuery && (
                   <button
                     type="button"
-                    onClick={() => setSearchQuery('')}
+                    onClick={() => {
+                      setSearchQuery('');
+                      setCurrentPage(1);
+                    }}
                     style={{
                       position: 'absolute',
                       right: '10px',
@@ -684,7 +699,10 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                   <select
                     className="input-glass-select"
                     value={categoryFilter}
-                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    onChange={(e) => {
+                      setCategoryFilter(e.target.value);
+                      setCurrentPage(1);
+                    }}
                     style={{
                       padding: '6px 12px',
                       fontSize: '12px',
@@ -708,7 +726,10 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                   <select
                     className="input-glass-select"
                     value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
+                    onChange={(e) => {
+                      setStatusFilter(e.target.value);
+                      setCurrentPage(1);
+                    }}
                     style={{
                       padding: '6px 12px',
                       fontSize: '12px',
@@ -731,6 +752,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                       setSearchQuery('');
                       setCategoryFilter('all');
                       setStatusFilter('all');
+                      setCurrentPage(1);
                     }}
                     style={{
                       fontSize: '12px',
@@ -876,7 +898,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                       </td>
                     </tr>
                   ) : (
-                    filteredProducts.map((item) => {
+                    paginatedProducts.map((item) => {
                     const isSelected = Boolean(selectedProduct && item.id === selectedProduct.id);
                     const isChecked = selectedProductIds.includes(item.id);
                     const isInactive = item.status === 'Inactive' || item.status === 'Discontinued' || item.status === 'Draft';
@@ -954,6 +976,90 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                 )}
                 </tbody>
               </table>
+            </div>
+
+            {/* PRODUCT CATALOG PAGINATION TOOLBAR */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginTop: '16px',
+                paddingTop: '16px',
+                borderTop: '1px solid var(--border-glass)',
+                flexWrap: 'wrap',
+                gap: '12px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <span style={{ fontSize: '12px', color: '#9aa8ba' }}>
+                  Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
+                  {Math.min(currentPage * itemsPerPage, filteredProducts.length)} of {filteredProducts.length} products
+                </span>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '12px', color: '#9aa8ba' }}>Per page:</span>
+                  <select
+                    className="input-glass-select"
+                    value={itemsPerPage}
+                    onChange={(e) => {
+                      setItemsPerPage(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    style={{
+                      padding: '4px 8px',
+                      fontSize: '12px',
+                      background: 'rgba(7, 16, 33, 0.95)',
+                      color: '#ffffff',
+                      border: '1px solid rgba(47, 140, 255, 0.35)',
+                      borderRadius: '6px',
+                    }}
+                  >
+                    <option value={10}>10</option>
+                    <option value={15}>15</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button
+                  type="button"
+                  className="btn-glass btn-glass-secondary btn-sm"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  style={{
+                    opacity: currentPage === 1 ? 0.4 : 1,
+                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <ChevronLeft size={14} /> Prev
+                </button>
+
+                <span style={{ fontSize: '12px', color: '#f5f7fa', fontWeight: 600, padding: '0 6px' }}>
+                  Page {currentPage} of {totalPages}
+                </span>
+
+                <button
+                  type="button"
+                  className="btn-glass btn-glass-secondary btn-sm"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  style={{
+                    opacity: currentPage === totalPages ? 0.4 : 1,
+                    cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  Next <ChevronRight size={14} />
+                </button>
+              </div>
             </div>
           </div>
 
