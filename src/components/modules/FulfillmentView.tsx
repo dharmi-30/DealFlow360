@@ -28,7 +28,7 @@ export const FulfillmentView: React.FC<FulfillmentViewProps> = ({
   const [trackingInput, setTrackingInput] = useState('');
   const [statusInput, setStatusInput] = useState<FulfillmentStatus>('dispatched');
 
-  const pendingPicks = fulfillments.filter((f) => f.status === 'pending_pick');
+  const pendingPicks = fulfillments.filter((f) => f.status === 'pending_pick' || f.status === 'packing');
 
   const filteredFulfillments = fulfillments.filter((f) => {
     if (selectedHub === 'all') return true;

@@ -30,7 +30,6 @@ import { ApprovalsView } from './components/modules/ApprovalsView';
 import { FulfillmentView } from './components/modules/FulfillmentView';
 import { SubscriptionsView } from './components/modules/SubscriptionsView';
 import { InvoicesView } from './components/modules/InvoicesView';
-import { DealHealthView } from './components/modules/DealHealthView';
 import { ReportsView } from './components/modules/ReportsView';
 import { ProductsView } from './components/modules/ProductsView';
 import { CustomerPortalView } from './components/customer/CustomerPortalView';
@@ -104,7 +103,13 @@ export const App: React.FC = () => {
   const [fulfillments, setFulfillments] = useState<FulfillmentRecord[]>(() => {
     try {
       const saved = localStorage.getItem('df360_fulfillments');
-      return saved ? JSON.parse(saved) : INITIAL_FULFILLMENT;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.some((f: any) => f.status === 'pending_pick' || f.status === 'packing')) {
+          return parsed;
+        }
+      }
+      return INITIAL_FULFILLMENT;
     } catch {
       return INITIAL_FULFILLMENT;
     }
@@ -538,16 +543,6 @@ export const App: React.FC = () => {
                   invoices={invoices}
                   onMarkPaid={handleMarkPaid}
                   onSendReminder={handleSendInvoiceReminder}
-                />
-              )}
-
-              {activeModule === 'deal-health' && (
-                <DealHealthView
-                  dealHealthScores={dealHealthScores}
-                  onOpenQuotation={(code) => {
-                    setActiveModule('quotations');
-                    addToast('info', `Opening Quotation ${code}`, `Navigated to Quotations workspace for inspection.`);
-                  }}
                 />
               )}
 

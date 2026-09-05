@@ -5,7 +5,6 @@ export type ModuleType =
   | 'fulfillment'
   | 'subscriptions'
   | 'invoices'
-  | 'deal-health'
   | 'reports'
   | 'products';
 
@@ -140,6 +139,7 @@ export interface Quotation {
   deliveryRequestDate?: string;
   customerComments?: string;
   negotiationHistory: NegotiationMessage[];
+  shippingAddress?: string;
 }
 
 export interface ApprovalRecord {

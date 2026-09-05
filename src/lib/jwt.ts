@@ -81,14 +81,14 @@ export async function createRealJwtToken(
   // Import secret key for HMAC-SHA256
   const key = await crypto.subtle.importKey(
     'raw',
-    str2ab(secret),
+    str2ab(secret) as BufferSource,
     { name: 'HMAC', hash: 'SHA-256' },
     false,
     ['sign']
   );
 
   // Sign with Web Crypto API
-  const signatureBuffer = await crypto.subtle.sign('HMAC', key, str2ab(dataToSign));
+  const signatureBuffer = await crypto.subtle.sign('HMAC', key, str2ab(dataToSign) as BufferSource);
   const encodedSignature = arrayBufferToBase64Url(signatureBuffer);
 
   return `${dataToSign}.${encodedSignature}`;
@@ -128,7 +128,7 @@ export async function verifyJwtSignature(
 
     const key = await crypto.subtle.importKey(
       'raw',
-      str2ab(secret),
+      str2ab(secret) as BufferSource,
       { name: 'HMAC', hash: 'SHA-256' },
       false,
       ['verify']
@@ -141,7 +141,7 @@ export async function verifyJwtSignature(
       signatureBytes[i] = signatureBinary.charCodeAt(i);
     }
 
-    return await crypto.subtle.verify('HMAC', key, signatureBytes, str2ab(dataToSign));
+    return await crypto.subtle.verify('HMAC', key, signatureBytes as BufferSource, str2ab(dataToSign) as BufferSource);
   } catch {
     return false;
   }
