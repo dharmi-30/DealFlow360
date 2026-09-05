@@ -94,11 +94,13 @@ export async function authenticateWithJwt(params: LoginParams): Promise<AuthSess
 
   const userId = `usr-${email.split('@')[0]}-${Math.floor(Math.random() * 1000)}`;
 
+  const computedName = fullName || email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) || 'User';
+
   if (!jwtToken) {
     jwtToken = await createRealJwtToken({
       sub: userId,
       email,
-      name: fullName || (accountType === 'internal' ? 'Sales Ops Director' : 'Marcus Vance'),
+      name: computedName,
       account_type: accountType,
       role: userRole,
       role_title: userRoleTitle,

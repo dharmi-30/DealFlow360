@@ -206,12 +206,12 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Profile Text Display */}
             <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
               <span style={{ fontSize: '12px', fontWeight: 700, color: '#f5f7fa', lineHeight: '1.2' }}>
-                {user?.name || (isCustomer ? 'Customer User' : 'Rahul Sharma')}
+                {user?.name || 'User'}
               </span>
               <span style={{ fontSize: '11px', color: isCustomer ? '#34d399' : '#9aa8ba', lineHeight: '1.2' }}>
                 {isCustomer
                   ? `${user?.company || 'Acme Corp'} — Customer`
-                  : `${user?.roleTitle || 'Sales Ops Director'}`}
+                  : `${user?.roleTitle || 'Sales Ops Member'}`}
               </span>
             </div>
 

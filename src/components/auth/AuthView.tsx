@@ -132,6 +132,29 @@ export const AuthView: React.FC<AuthViewProps> = ({
     }
   };
 
+  const handleEmailChange = (newEmail: string) => {
+    setEmail(newEmail);
+    // Check if email matches any pre-configured demo persona
+    const matchedIdx = DEMO_PERSONAS[accountType].findIndex(
+      (p) => p.email.toLowerCase() === newEmail.toLowerCase()
+    );
+
+    if (matchedIdx !== -1) {
+      setSelectedPersonaIdx(matchedIdx);
+      const persona = DEMO_PERSONAS[accountType][matchedIdx];
+      setFullName(persona.name);
+      setCompanyName(persona.company);
+      if (accountType === 'internal') {
+        setInternalRole(persona.role);
+      }
+    } else {
+      setSelectedPersonaIdx(-1);
+      // Derive name from email prefix if custom
+      const nameFromEmail = newEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+      setFullName(nameFromEmail || 'User');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -146,7 +169,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
     }
 
     try {
-      // Find matching predefined persona metadata if selected
+      // Find matching predefined persona metadata if selected or typed
       const matchedPersona = DEMO_PERSONAS[accountType].find(
         (p) => p.email.toLowerCase() === email.toLowerCase()
       );
@@ -169,13 +192,16 @@ export const AuthView: React.FC<AuthViewProps> = ({
         }
       }
 
+      const finalName = matchedPersona?.name || fullName || email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+      const finalCompany = accountType === 'customer' ? (companyName || matchedPersona?.company || 'Customer Corp') : 'DealFlow360 Operations';
+
       // Perform Real Cryptographic JWT Authentication (Web Crypto API + FastAPI Sync)
       const authResult = await authenticateWithJwt({
         email,
         password,
         accountType,
-        fullName: fullName || matchedPersona?.name,
-        companyName: accountType === 'customer' ? (companyName || matchedPersona?.company) : 'DealFlow360 Operations',
+        fullName: finalName,
+        companyName: finalCompany,
         role,
         roleTitle,
         customerId: matchedPersona?.customerId,
@@ -438,7 +464,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 type="email"
                 className="input-glass-select"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => handleEmailChange(e.target.value)}
                 placeholder="name@company.com"
                 required
                 style={{ width: '100%', paddingLeft: '36px' }}
