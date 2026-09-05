@@ -13,10 +13,13 @@ import {
   Save,
   Sparkles,
   Info,
+  Plus,
+  X,
 } from 'lucide-react';
 
 interface ProductsViewProps {
   products: Product[];
+  onAddProduct?: (product: Product) => void;
 }
 
 interface DetailedProductItem {
@@ -131,8 +134,20 @@ const EXTENDED_PRODUCTS: DetailedProductItem[] = [
   },
 ];
 
-export const ProductsView: React.FC<ProductsViewProps> = ({ products = [] }) => {
+export const ProductsView: React.FC<ProductsViewProps> = ({ products = [], onAddProduct }) => {
   const [activeTab, setActiveTab] = useState<'catalog' | 'discount-config'>('catalog');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [newProductForm, setNewProductForm] = useState({
+    name: '',
+    sku: '',
+    category: 'Hardware',
+    listPrice: '',
+    cogs: '',
+    minMarginPct: '20.0',
+    defaultDiscountPct: '5.0',
+    inStock: '100',
+    description: '',
+  });
 
   // Convert schema.sql parsed products into detailed view items
   const dynamicProductList: DetailedProductItem[] = products.map((p) => ({
@@ -188,6 +203,75 @@ export const ProductsView: React.FC<ProductsViewProps> = ({ products = [] }) => 
     setTimeout(() => setSaveNotice(null), 4000);
   };
 
+  const handleCreateProductSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newProductForm.name || !newProductForm.sku || !newProductForm.listPrice) return;
+
+    const listPriceNum = parseFloat(newProductForm.listPrice);
+    const cogsNum = parseFloat(newProductForm.cogs || '0');
+    const inStockNum = parseInt(newProductForm.inStock || '100', 10);
+    const categoryVal = newProductForm.category as any;
+
+    const createdProduct: Product = {
+      id: `prod-${Date.now()}`,
+      sku: newProductForm.sku.toUpperCase().trim(),
+      name: newProductForm.name.trim(),
+      category: categoryVal,
+      description: newProductForm.description.trim() || `${newProductForm.name} - Commercial Catalog Product`,
+      listPrice: listPriceNum,
+      cogs: cogsNum,
+      minMarginPct: parseFloat(newProductForm.minMarginPct || '20.0'),
+      defaultDiscountPct: parseFloat(newProductForm.defaultDiscountPct || '5.0'),
+      upsellIds: [],
+      crossSellIds: [],
+      inStock: inStockNum,
+    };
+
+    if (onAddProduct) {
+      onAddProduct(createdProduct);
+    }
+
+    const detailedItem: DetailedProductItem = {
+      id: createdProduct.id,
+      name: createdProduct.name,
+      category: createdProduct.category,
+      variantsCount: 2,
+      price: createdProduct.listPrice,
+      unit: categoryVal.includes('Subscription') || categoryVal.includes('Support') ? 'Contract' : categoryVal.includes('Services') ? 'Session' : 'Unit',
+      taxPct: categoryVal.includes('Services') ? 0.0 : 8.5,
+      status: 'Active',
+      description: createdProduct.description,
+      isSubscription: categoryVal.includes('Subscription') || categoryVal.includes('Support'),
+      recurringCycle: categoryVal.includes('Subscription') || categoryVal.includes('Support') ? 'Monthly' : 'N/A',
+      quantityOnHand: createdProduct.inStock,
+      variants: [
+        { name: `${createdProduct.name} (Base Spec)`, sku: createdProduct.sku, price: createdProduct.listPrice, stock: Math.round(createdProduct.inStock * 0.6) },
+        { name: `${createdProduct.name} (Enterprise Spec)`, sku: `${createdProduct.sku}-ENT`, price: Math.round(createdProduct.listPrice * 1.25), stock: Math.round(createdProduct.inStock * 0.4) },
+      ],
+      priceLists: [
+        { name: 'Standard Commercial List', discountPct: 0, netPrice: createdProduct.listPrice },
+        { name: 'Enterprise Volume Tier', discountPct: 10, netPrice: Number((createdProduct.listPrice * 0.9).toFixed(2)) },
+        { name: 'Federal GSA Schedule', discountPct: 15, netPrice: Number((createdProduct.listPrice * 0.85).toFixed(2)) },
+      ],
+    };
+
+    setSelectedProduct(detailedItem);
+    setIsCreateModalOpen(false);
+    setNewProductForm({
+      name: '',
+      sku: '',
+      category: 'Hardware',
+      listPrice: '',
+      cogs: '',
+      minMarginPct: '20.0',
+      defaultDiscountPct: '5.0',
+      inStock: '100',
+      description: '',
+    });
+    setSaveNotice(`Product "${createdProduct.name}" (${createdProduct.sku}) created and added to commercial catalog.`);
+    setTimeout(() => setSaveNotice(null), 4000);
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {/* Page Header */}
@@ -199,38 +283,62 @@ export const ProductsView: React.FC<ProductsViewProps> = ({ products = [] }) => 
           </p>
         </div>
 
-        {/* Tab Switcher */}
-        <div style={{ display: 'flex', gap: '4px', background: 'rgba(7,17,31,0.6)', padding: '3px', borderRadius: '8px' }}>
+        {/* Tab Switcher & Add Product Action */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button
-            onClick={() => setActiveTab('catalog')}
+            className="btn-glass btn-glass-primary"
+            onClick={() => setIsCreateModalOpen(true)}
             style={{
-              padding: '6px 14px',
-              fontSize: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 16px',
+              fontSize: '13px',
               fontWeight: 700,
-              borderRadius: '6px',
+              background: 'linear-gradient(135deg, #2f8cff 0%, #0056b3 100%)',
+              color: '#ffffff',
               border: 'none',
+              borderRadius: '8px',
               cursor: 'pointer',
-              background: activeTab === 'catalog' ? '#2f8cff' : 'transparent',
-              color: activeTab === 'catalog' ? '#fff' : '#9aa8ba',
+              boxShadow: '0 4px 14px rgba(47, 140, 255, 0.35)',
             }}
           >
-            Product Dashboard
+            <Plus size={16} />
+            <span>Add Product</span>
           </button>
-          <button
-            onClick={() => setActiveTab('discount-config')}
-            style={{
-              padding: '6px 14px',
-              fontSize: '12px',
-              fontWeight: 700,
-              borderRadius: '6px',
-              border: 'none',
-              cursor: 'pointer',
-              background: activeTab === 'discount-config' ? '#2f8cff' : 'transparent',
-              color: activeTab === 'discount-config' ? '#fff' : '#9aa8ba',
-            }}
-          >
-            Discount Configuration
-          </button>
+
+          <div style={{ display: 'flex', gap: '4px', background: 'rgba(7,17,31,0.6)', padding: '3px', borderRadius: '8px' }}>
+            <button
+              onClick={() => setActiveTab('catalog')}
+              style={{
+                padding: '6px 14px',
+                fontSize: '12px',
+                fontWeight: 700,
+                borderRadius: '6px',
+                border: 'none',
+                cursor: 'pointer',
+                background: activeTab === 'catalog' ? '#2f8cff' : 'transparent',
+                color: activeTab === 'catalog' ? '#fff' : '#9aa8ba',
+              }}
+            >
+              Product Dashboard
+            </button>
+            <button
+              onClick={() => setActiveTab('discount-config')}
+              style={{
+                padding: '6px 14px',
+                fontSize: '12px',
+                fontWeight: 700,
+                borderRadius: '6px',
+                border: 'none',
+                cursor: 'pointer',
+                background: activeTab === 'discount-config' ? '#2f8cff' : 'transparent',
+                color: activeTab === 'discount-config' ? '#fff' : '#9aa8ba',
+              }}
+            >
+              Discount Configuration
+            </button>
+          </div>
         </div>
       </div>
 
@@ -295,12 +403,29 @@ export const ProductsView: React.FC<ProductsViewProps> = ({ products = [] }) => 
           {/* PRODUCT DASHBOARD TABLE */}
           <div className="glass-panel" style={{ padding: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#f5f7fa', margin: 0 }}>
-                Product Dashboard Table
-              </h3>
-              <span style={{ fontSize: '12px', color: '#9aa8ba' }}>
-                Click row to view Product Detail inspector
-              </span>
+              <div>
+                <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#f5f7fa', margin: 0 }}>
+                  Product Dashboard Table ({productList.length} SKUs)
+                </h3>
+                <span style={{ fontSize: '12px', color: '#9aa8ba' }}>
+                  Click row to view Product Detail inspector
+                </span>
+              </div>
+              <button
+                className="btn-glass btn-glass-primary btn-sm"
+                onClick={() => setIsCreateModalOpen(true)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '12px',
+                  padding: '6px 14px',
+                  background: 'linear-gradient(135deg, #2f8cff 0%, #0056b3 100%)',
+                }}
+              >
+                <Plus size={14} />
+                <span>Create Product</span>
+              </button>
             </div>
 
             <div className="table-glass-wrapper">
@@ -616,6 +741,218 @@ export const ProductsView: React.FC<ProductsViewProps> = ({ products = [] }) => 
             </div>
           </div>
         </form>
+      )}
+
+      {/* CREATE PRODUCT MODAL OVERLAY */}
+      {isCreateModalOpen && (
+        <div
+          className="modal-backdrop"
+          onClick={() => setIsCreateModalOpen(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(5, 12, 24, 0.82)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px',
+          }}
+        >
+          <div
+            className="glass-panel"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: '560px',
+              borderRadius: '14px',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              background: 'linear-gradient(145deg, rgba(13, 25, 48, 0.95) 0%, rgba(7, 16, 33, 0.98) 100%)',
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6)',
+              padding: '24px',
+            }}
+          >
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingBottom: '14px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(47, 140, 255, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2f8cff' }}>
+                  <Package size={20} />
+                </div>
+                <div>
+                  <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#ffffff', margin: 0 }}>Add New Product</h2>
+                  <span style={{ fontSize: '12px', color: '#9aa8ba' }}>Configure commercial SKU & pricing parameters</span>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsCreateModalOpen(false)}
+                style={{ background: 'transparent', border: 'none', color: '#9aa8ba', cursor: 'pointer', padding: '4px', borderRadius: '6px' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleCreateProductSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '14px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
+                    Product Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Laptop Pro 16"
+                    className="input-glass"
+                    style={{ width: '100%', padding: '9px 12px', fontSize: '13px' }}
+                    value={newProductForm.name}
+                    onChange={(e) => setNewProductForm({ ...newProductForm, name: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
+                    SKU Code *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. HW-LAP-16"
+                    className="input-glass"
+                    style={{ width: '100%', padding: '9px 12px', fontSize: '13px', textTransform: 'uppercase' }}
+                    value={newProductForm.sku}
+                    onChange={(e) => setNewProductForm({ ...newProductForm, sku: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
+                    Product Category *
+                  </label>
+                  <select
+                    className="input-glass-select"
+                    style={{ width: '100%', padding: '9px 12px', fontSize: '13px' }}
+                    value={newProductForm.category}
+                    onChange={(e) => setNewProductForm({ ...newProductForm, category: e.target.value })}
+                  >
+                    <option value="Hardware">Hardware</option>
+                    <option value="Software Subscription">Software Subscription</option>
+                    <option value="Professional Services">Professional Services</option>
+                    <option value="Support">Support</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
+                    List Price ($) *
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    placeholder="1850.00"
+                    className="input-glass"
+                    style={{ width: '100%', padding: '9px 12px', fontSize: '13px' }}
+                    value={newProductForm.listPrice}
+                    onChange={(e) => setNewProductForm({ ...newProductForm, listPrice: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#9aa8ba', marginBottom: '6px' }}>
+                    Unit COGS ($)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="1200.00"
+                    className="input-glass"
+                    style={{ width: '100%', padding: '8px 10px', fontSize: '12px' }}
+                    value={newProductForm.cogs}
+                    onChange={(e) => setNewProductForm({ ...newProductForm, cogs: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#9aa8ba', marginBottom: '6px' }}>
+                    Min Margin (%)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    placeholder="20.0"
+                    className="input-glass"
+                    style={{ width: '100%', padding: '8px 10px', fontSize: '12px' }}
+                    value={newProductForm.minMarginPct}
+                    onChange={(e) => setNewProductForm({ ...newProductForm, minMarginPct: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#9aa8ba', marginBottom: '6px' }}>
+                    In-Stock Qty
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="100"
+                    className="input-glass"
+                    style={{ width: '100%', padding: '8px 10px', fontSize: '12px' }}
+                    value={newProductForm.inStock}
+                    onChange={(e) => setNewProductForm({ ...newProductForm, inStock: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
+                  Description & Specifications
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="Provide product features, hardware specs, or subscription SLA guidelines..."
+                  className="input-glass"
+                  style={{ width: '100%', padding: '9px 12px', fontSize: '13px', resize: 'vertical' }}
+                  value={newProductForm.description}
+                  onChange={(e) => setNewProductForm({ ...newProductForm, description: e.target.value })}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                <button
+                  type="button"
+                  className="btn-glass btn-glass-secondary"
+                  onClick={() => setIsCreateModalOpen(false)}
+                  style={{ padding: '8px 16px', fontSize: '13px' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn-glass btn-glass-primary"
+                  style={{
+                    padding: '8px 20px',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    background: 'linear-gradient(135deg, #2f8cff 0%, #0056b3 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Save Product to Catalog
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

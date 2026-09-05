@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   ModuleType,
   ViewMode,
+  Product,
   Quotation,
   ApprovalRecord,
   FulfillmentRecord,
@@ -80,7 +81,27 @@ export const App: React.FC = () => {
 
   // Core Operational Datasets State with localStorage Persistence
   const [customers] = useState(INITIAL_CUSTOMERS);
-  const [products] = useState(INITIAL_PRODUCTS);
+  const [products, setProducts] = useState<Product[]>(() => {
+    try {
+      const saved = localStorage.getItem('df360_products');
+      return saved ? JSON.parse(saved) : INITIAL_PRODUCTS;
+    } catch {
+      return INITIAL_PRODUCTS;
+    }
+  });
+
+  const handleAddProduct = (newProduct: Product) => {
+    setProducts((prev) => {
+      const updated = [newProduct, ...prev];
+      try {
+        localStorage.setItem('df360_products', JSON.stringify(updated));
+      } catch (err) {
+        console.error('Failed to save products to localStorage:', err);
+      }
+      return updated;
+    });
+    addToast('success', 'Product Created', `Added ${newProduct.name} (${newProduct.sku}) to commercial catalog.`);
+  };
   
   const [quotations, setQuotations] = useState<Quotation[]>(() => {
     try {
@@ -554,7 +575,9 @@ export const App: React.FC = () => {
                 />
               )}
 
-              {activeModule === 'products' && <ProductsView products={products} />}
+              {activeModule === 'products' && (
+                <ProductsView products={products} onAddProduct={handleAddProduct} />
+              )}
             </>
           )}
         </main>
