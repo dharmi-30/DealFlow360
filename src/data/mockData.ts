@@ -12,3 +12,4 @@ export const INITIAL_FULFILLMENT = parsedSeed.fulfillments;
 export const INITIAL_SUBSCRIPTIONS = parsedSeed.subscriptions;
 export const INITIAL_INVOICES = parsedSeed.invoices;
 export const INITIAL_DEAL_HEALTH = parsedSeed.dealHealthScores;
+export const INITIAL_WAREHOUSE_INVENTORY = parsedSeed.warehouseInventory;

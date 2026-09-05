@@ -87,6 +87,22 @@ export interface Product {
   status?: 'Active' | 'Inactive' | 'Archived';
 }
 
+export interface WarehouseInventoryRecord {
+  id: string;
+  warehouseId: string;
+  warehouseName: string;
+  location: string;
+  productId: string;
+  productName: string;
+  sku: string;
+  category: string;
+  quantity: number;
+  reservedQuantity: number;
+  availableStock: number;
+  unitOfMeasure: string;
+  status: 'In Stock' | 'Low Stock' | 'Critical';
+}
+
 export interface Customer {
   id: string;
   name: string;

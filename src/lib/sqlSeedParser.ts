@@ -12,6 +12,7 @@ import {
   DealHealthScore,
   QuotationItem,
   NegotiationMessage,
+  WarehouseInventoryRecord,
 } from '../types';
 
 interface ParsedRow {
@@ -120,6 +121,7 @@ export function parseSchemaSqlSeedData() {
   const rawInvoices = parseTableInserts(sql, 'invoices');
   const rawDealEvents = parseTableInserts(sql, 'deal_events');
   const rawWarehouses = parseTableInserts(sql, 'warehouses');
+  const rawInventory = parseTableInserts(sql, 'inventory');
 
   // Categories
   const categories: Category[] = rawCategories.map((c) => ({
@@ -407,6 +409,38 @@ export function parseSchemaSqlSeedData() {
     };
   });
 
+  // 9. WAREHOUSE INVENTORY (600 records)
+  const warehouseMap = new Map<string, any>();
+  rawWarehouses.forEach((w) => warehouseMap.set(w.id, w));
+
+  const rawProdMap = new Map<string, any>();
+  rawProducts.forEach((p) => rawProdMap.set(p.id, p));
+
+  const warehouseInventory: WarehouseInventoryRecord[] = rawInventory.map((inv, idx) => {
+    const wh = warehouseMap.get(inv.warehouse_id);
+    const prod = rawProdMap.get(inv.product_id) || rawProducts[idx % rawProducts.length];
+    const qty = Number(inv.quantity) || 100;
+    const res = Number(inv.reserved_quantity) || 0;
+    const avail = Math.max(0, qty - res);
+    const unit = prod?.unit_of_measure || (prod?.category?.includes('Subscription') ? 'Contract' : prod?.category?.includes('Services') ? 'Session' : 'Unit');
+
+    return {
+      id: inv.id || `inv-rec-${idx + 1}`,
+      warehouseId: inv.warehouse_id,
+      warehouseName: wh?.name || 'Dallas Warehouse (HUB-01)',
+      location: wh?.location || 'Dallas, TX',
+      productId: inv.product_id,
+      productName: prod?.name || 'Enterprise Hardware SKU',
+      sku: prod?.sku || `SKU-PROD-${(idx % 300) + 1}`,
+      category: prod?.category || 'Hardware',
+      quantity: qty,
+      reservedQuantity: res,
+      availableStock: avail,
+      unitOfMeasure: unit,
+      status: avail < 20 ? 'Critical' : avail < 50 ? 'Low Stock' : 'In Stock',
+    };
+  });
+
   return {
     customers,
     categories,
@@ -417,5 +451,6 @@ export function parseSchemaSqlSeedData() {
     subscriptions,
     invoices,
     dealHealthScores,
+    warehouseInventory,
   };
 }

@@ -11,6 +11,7 @@ import {
   InvoiceRecord,
   DealHealthScore,
   FulfillmentStatus,
+  WarehouseInventoryRecord,
 } from './types';
 import {
   INITIAL_CUSTOMERS,
@@ -22,6 +23,7 @@ import {
   INITIAL_SUBSCRIPTIONS,
   INITIAL_INVOICES,
   INITIAL_DEAL_HEALTH,
+  INITIAL_WAREHOUSE_INVENTORY,
 } from './data/mockData';
 import { Header } from './components/layout/Header';
 import { Sidebar } from './components/layout/Sidebar';
@@ -214,6 +216,15 @@ export const App: React.FC = () => {
     }
   });
 
+  const [inventoryRecords, setInventoryRecords] = useState<WarehouseInventoryRecord[]>(() => {
+    try {
+      const saved = localStorage.getItem('df360_inventory');
+      return saved ? JSON.parse(saved) : INITIAL_WAREHOUSE_INVENTORY;
+    } catch {
+      return INITIAL_WAREHOUSE_INVENTORY;
+    }
+  });
+
   const [dealHealthScores] = useState<DealHealthScore[]>(INITIAL_DEAL_HEALTH);
 
   // Auto-sync state changes to browser localStorage
@@ -236,6 +247,10 @@ export const App: React.FC = () => {
   useEffect(() => {
     try { localStorage.setItem('df360_invoices', JSON.stringify(invoices)); } catch {}
   }, [invoices]);
+
+  useEffect(() => {
+    try { localStorage.setItem('df360_inventory', JSON.stringify(inventoryRecords)); } catch {}
+  }, [inventoryRecords]);
 
   // Global Toast System
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -413,6 +428,30 @@ export const App: React.FC = () => {
     );
 
     addToast('success', 'Logistics Dispatch Updated', `Shipment status set to ${status.toUpperCase()}`);
+  };
+
+  // Handler: Update Stock Inventory Quantity
+  const handleUpdateStock = (inventoryId: string, newQuantity: number, newReservedQty: number) => {
+    setInventoryRecords((prev) => {
+      const updated = prev.map((item) => {
+        if (item.id === inventoryId) {
+          const availableStock = Math.max(0, newQuantity - newReservedQty);
+          let status: 'In Stock' | 'Low Stock' | 'Critical' = 'In Stock';
+          if (availableStock === 0) status = 'Critical';
+          else if (availableStock < 20) status = 'Low Stock';
+          return {
+            ...item,
+            quantity: newQuantity,
+            reservedQuantity: newReservedQty,
+            availableStock,
+            status,
+          };
+        }
+        return item;
+      });
+      return updated;
+    });
+    addToast('success', 'Stock Inventory Updated', 'Warehouse unit quantities adjusted in real time.');
   };
 
   // Handler: Send Sales Rep Message
@@ -609,6 +648,8 @@ export const App: React.FC = () => {
                 <FulfillmentView
                   fulfillments={fulfillments}
                   onUpdateFulfillment={handleUpdateFulfillment}
+                  inventoryRecords={inventoryRecords}
+                  onUpdateStock={handleUpdateStock}
                 />
               )}
 
