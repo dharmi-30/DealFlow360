@@ -529,7 +529,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                 <Package size={16} style={{ color: '#38d9ff' }} />
               </div>
               <div className="kpi-main-val" style={{ color: '#38d9ff' }}>
-                18 Products
+                {productList.length} Products
               </div>
               <div className="kpi-sub-label">Commercial catalog SKUs</div>
             </div>
@@ -551,7 +551,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                 <Layers size={16} style={{ color: '#f5b544' }} />
               </div>
               <div className="kpi-main-val" style={{ color: '#f5b544' }}>
-                42 Variants
+                {productList.reduce((acc, p) => acc + (p.variants?.length || 3), 0)} Variants
               </div>
               <div className="kpi-sub-label">Active product configurations</div>
             </div>
