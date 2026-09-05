@@ -51,15 +51,77 @@ export const App: React.FC = () => {
   const [activeQuotationForPortal, setActiveQuotationForPortal] = useState<string | undefined>(undefined);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  // Core Operational Datasets State
+  // Core Operational Datasets State with localStorage Persistence
   const [customers] = useState(INITIAL_CUSTOMERS);
   const [products] = useState(INITIAL_PRODUCTS);
-  const [quotations, setQuotations] = useState<Quotation[]>(INITIAL_QUOTATIONS);
-  const [approvals, setApprovals] = useState<ApprovalRecord[]>(INITIAL_APPROVALS);
-  const [fulfillments, setFulfillments] = useState<FulfillmentRecord[]>(INITIAL_FULFILLMENT);
-  const [subscriptions, setSubscriptions] = useState<SubscriptionRecord[]>(INITIAL_SUBSCRIPTIONS);
-  const [invoices, setInvoices] = useState<InvoiceRecord[]>(INITIAL_INVOICES);
-  const [dealHealthScores, setDealHealthScores] = useState<DealHealthScore[]>(INITIAL_DEAL_HEALTH);
+  
+  const [quotations, setQuotations] = useState<Quotation[]>(() => {
+    try {
+      const saved = localStorage.getItem('df360_quotations');
+      return saved ? JSON.parse(saved) : INITIAL_QUOTATIONS;
+    } catch {
+      return INITIAL_QUOTATIONS;
+    }
+  });
+
+  const [approvals, setApprovals] = useState<ApprovalRecord[]>(() => {
+    try {
+      const saved = localStorage.getItem('df360_approvals');
+      return saved ? JSON.parse(saved) : INITIAL_APPROVALS;
+    } catch {
+      return INITIAL_APPROVALS;
+    }
+  });
+
+  const [fulfillments, setFulfillments] = useState<FulfillmentRecord[]>(() => {
+    try {
+      const saved = localStorage.getItem('df360_fulfillments');
+      return saved ? JSON.parse(saved) : INITIAL_FULFILLMENT;
+    } catch {
+      return INITIAL_FULFILLMENT;
+    }
+  });
+
+  const [subscriptions, setSubscriptions] = useState<SubscriptionRecord[]>(() => {
+    try {
+      const saved = localStorage.getItem('df360_subscriptions');
+      return saved ? JSON.parse(saved) : INITIAL_SUBSCRIPTIONS;
+    } catch {
+      return INITIAL_SUBSCRIPTIONS;
+    }
+  });
+
+  const [invoices, setInvoices] = useState<InvoiceRecord[]>(() => {
+    try {
+      const saved = localStorage.getItem('df360_invoices');
+      return saved ? JSON.parse(saved) : INITIAL_INVOICES;
+    } catch {
+      return INITIAL_INVOICES;
+    }
+  });
+
+  const [dealHealthScores] = useState<DealHealthScore[]>(INITIAL_DEAL_HEALTH);
+
+  // Auto-sync state changes to browser localStorage
+  useEffect(() => {
+    try { localStorage.setItem('df360_quotations', JSON.stringify(quotations)); } catch {}
+  }, [quotations]);
+
+  useEffect(() => {
+    try { localStorage.setItem('df360_approvals', JSON.stringify(approvals)); } catch {}
+  }, [approvals]);
+
+  useEffect(() => {
+    try { localStorage.setItem('df360_fulfillments', JSON.stringify(fulfillments)); } catch {}
+  }, [fulfillments]);
+
+  useEffect(() => {
+    try { localStorage.setItem('df360_subscriptions', JSON.stringify(subscriptions)); } catch {}
+  }, [subscriptions]);
+
+  useEffect(() => {
+    try { localStorage.setItem('df360_invoices', JSON.stringify(invoices)); } catch {}
+  }, [invoices]);
 
   // Global Toast System
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
