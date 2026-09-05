@@ -23,13 +23,29 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
   return (
     <div className="search-modal-backdrop" onClick={onClose}>
       <div className="search-modal-box" style={{ width: '700px' }} onClick={(e) => e.stopPropagation()}>
-        <div className="search-modal-input-wrap">
+        <div className="search-modal-input-wrap" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <FileText size={18} style={{ color: '#2f8cff' }} />
             <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#f5f7fa', margin: 0 }}>Tax Invoice Document</h3>
             <Badge status={invoice.status} />
           </div>
-          <button onClick={onClose} style={{ color: '#9aa8ba' }}>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              background: 'rgba(255, 255, 255, 0.06)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              color: '#9aa8ba',
+              cursor: 'pointer',
+              padding: '6px',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.15s ease',
+            }}
+            title="Close Invoice Document"
+          >
             <X size={18} />
           </button>
         </div>
