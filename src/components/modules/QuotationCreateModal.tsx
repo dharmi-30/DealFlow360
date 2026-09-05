@@ -238,14 +238,30 @@ export const QuotationCreateModal: React.FC<QuotationCreateModalProps> = ({
   };
 
   return (
-    <div className="search-modal-backdrop">
-      <div className="search-modal-box" style={{ width: '840px' }}>
-        <div className="search-modal-input-wrap">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+    <div className="search-modal-backdrop" onClick={onClose}>
+      <div className="search-modal-box" style={{ width: '840px' }} onClick={(e) => e.stopPropagation()}>
+        <div className="search-modal-input-wrap" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#f5f7fa', margin: 0 }}>Quotation Builder</h2>
             <span className="badge-glass badge-glass-neutral">Commercial Workspace</span>
           </div>
-          <button onClick={onClose} style={{ color: '#9aa8ba' }}>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              background: 'rgba(255, 255, 255, 0.06)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              color: '#9aa8ba',
+              cursor: 'pointer',
+              padding: '6px',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.15s ease',
+            }}
+            title="Close Quotation Builder"
+          >
             <X size={18} />
           </button>
         </div>
