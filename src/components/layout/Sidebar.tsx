@@ -39,7 +39,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'invoices', label: 'Invoices', icon: <Receipt size={16} /> },
     { id: 'reports', label: 'Reports', icon: <BarChart3 size={16} /> },
     { id: 'products', label: 'Products', icon: <Package size={16} /> },
-    { id: 'deal-health', label: 'Deal Health', icon: <Activity size={16} /> },
   ];
 
   return (

@@ -419,7 +419,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
               <button
                 className="btn-glass btn-glass-secondary btn-sm"
-                onClick={() => setActiveModule('deal-health')}
+                onClick={() => setActiveModule('quotations')}
                 style={{ fontSize: '11px' }}
               >
                 View All ({dealHealthScores.length})
@@ -471,10 +471,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
           <button
             className="btn-glass btn-glass-secondary"
-            onClick={() => setActiveModule('deal-health')}
+            onClick={() => setActiveModule('quotations')}
             style={{ marginTop: '16px', width: '100%', justifyContent: 'center', fontSize: '12px' }}
           >
-            Launch Deal Health Diagnostic Tool
+            Manage Active Quotations
           </button>
         </div>
       </div>

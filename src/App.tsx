@@ -32,7 +32,6 @@ import { SubscriptionsView } from './components/modules/SubscriptionsView';
 import { InvoicesView } from './components/modules/InvoicesView';
 import { ReportsView } from './components/modules/ReportsView';
 import { ProductsView } from './components/modules/ProductsView';
-import { DealHealthView } from './components/modules/DealHealthView';
 import { CustomerPortalView } from './components/customer/CustomerPortalView';
 import { QuotationCreateModal } from './components/modules/QuotationCreateModal';
 import { AuthView } from './components/auth/AuthView';
@@ -556,13 +555,6 @@ export const App: React.FC = () => {
               )}
 
               {activeModule === 'products' && <ProductsView products={products} />}
-
-              {activeModule === 'deal-health' && (
-                <DealHealthView
-                  dealHealthScores={dealHealthScores}
-                  onOpenQuotation={() => setActiveModule('quotations')}
-                />
-              )}
             </>
           )}
         </main>

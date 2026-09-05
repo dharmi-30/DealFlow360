@@ -6,8 +6,7 @@ export type ModuleType =
   | 'subscriptions'
   | 'invoices'
   | 'reports'
-  | 'products'
-  | 'deal-health';
+  | 'products';
 
 export type ViewMode = 'internal' | 'customer';
 
