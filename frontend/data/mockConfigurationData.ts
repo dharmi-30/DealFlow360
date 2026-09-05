@@ -1,0 +1,103 @@
+import type { WarehouseConfig, DiscountRuleConfig } from '@/types/configuration';
+
+export const MOCK_WAREHOUSES: WarehouseConfig[] = [
+  {
+    id: 'wh_01',
+    name: 'Warehouse East (Boston Hub)',
+    code: 'WH-EAST-BOS',
+    location: 'Boston, MA',
+    status: 'active',
+    capacityUnits: 15000,
+    currentStockUnits: 9850,
+    inventoryBreakdown: [
+      { sku: 'SKU-SaaS-ENT', productName: 'Enterprise SaaS Annual License', available: 120, reserved: 20, reorderPoint: 50 },
+      { sku: 'SKU-SERV-ONB', productName: 'Premium Implementation Onboarding', available: 50, reserved: 5, reorderPoint: 10 },
+      { sku: 'SKU-SUPP-PRIO', productName: '24/7 Priority SLA Support Tier', available: 100, reserved: 12, reorderPoint: 25 },
+      { sku: 'SKU-SEC-FW', productName: 'Dedicated Security Firewall Module', available: 35, reserved: 15, reorderPoint: 20 },
+    ],
+  },
+  {
+    id: 'wh_02',
+    name: 'Warehouse West (Seattle Depot)',
+    code: 'WH-WEST-SEA',
+    location: 'Seattle, WA',
+    status: 'active',
+    capacityUnits: 20000,
+    currentStockUnits: 14200,
+    inventoryBreakdown: [
+      { sku: 'SKU-NODE-CLD', productName: 'Cloud Infrastructure Node Unit', available: 80, reserved: 30, reorderPoint: 40 },
+      { sku: 'SKU-AV-PROC', productName: 'Avionics Data Processor Unit', available: 85, reserved: 45, reorderPoint: 50 },
+      { sku: 'SKU-TEL-SUITE', productName: 'Telemetry Calibration Suite', available: 999, reserved: 50, reorderPoint: 100 },
+    ],
+  },
+  {
+    id: 'wh_03',
+    name: 'Warehouse Midwest (Chicago Hub)',
+    code: 'WH-MID-CHI',
+    location: 'Chicago, IL',
+    status: 'active',
+    capacityUnits: 12000,
+    currentStockUnits: 7500,
+    inventoryBreakdown: [
+      { sku: 'SKU-ROBO-SORT', productName: 'Automated Sorting Robotics Unit', available: 12, reserved: 10, reorderPoint: 5 },
+      { sku: 'SKU-AV-PROC', productName: 'Avionics Data Processor Unit', available: 40, reserved: 25, reorderPoint: 30 },
+    ],
+  },
+];
+
+export const MOCK_DISCOUNT_RULES: DiscountRuleConfig[] = [
+  {
+    id: 'rule_01',
+    ruleName: 'Bronze Tier Standard Safeguard',
+    customerTier: 'Bronze',
+    maxDiscountPercentage: 10.0,
+    categoryRestriction: 'All Categories',
+    approvalRequirement: 'auto_approved',
+    status: 'active',
+  },
+  {
+    id: 'rule_02',
+    ruleName: 'Bronze Tier High-Discount Cap',
+    customerTier: 'Bronze',
+    maxDiscountPercentage: 15.0,
+    categoryRestriction: 'All Categories',
+    approvalRequirement: 'manager_approval',
+    status: 'active',
+  },
+  {
+    id: 'rule_03',
+    ruleName: 'Silver Tier Preferred Partner Policy',
+    customerTier: 'Silver',
+    maxDiscountPercentage: 15.0,
+    categoryRestriction: 'All Categories',
+    approvalRequirement: 'auto_approved',
+    status: 'active',
+  },
+  {
+    id: 'rule_04',
+    ruleName: 'Silver Tier Services & Hardware Threshold',
+    customerTier: 'Silver',
+    maxDiscountPercentage: 20.0,
+    categoryRestriction: 'Hardware & Services',
+    approvalRequirement: 'manager_approval',
+    status: 'active',
+  },
+  {
+    id: 'rule_05',
+    ruleName: 'Gold Tier Enterprise Preferred Cap',
+    customerTier: 'Gold',
+    maxDiscountPercentage: 20.0,
+    categoryRestriction: 'All Categories',
+    approvalRequirement: 'auto_approved',
+    status: 'active',
+  },
+  {
+    id: 'rule_06',
+    ruleName: 'Gold Tier Executive Discount Sign-off',
+    customerTier: 'Gold',
+    maxDiscountPercentage: 30.0,
+    categoryRestriction: 'Software & Hardware',
+    approvalRequirement: 'executive_approval',
+    status: 'active',
+  },
+];

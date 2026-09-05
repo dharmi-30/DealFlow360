@@ -1,0 +1,346 @@
+import rawSchemaSql from '../../schema.sql?raw';
+import {
+  Customer,
+  Product,
+  Quotation,
+  ApprovalRecord,
+  FulfillmentRecord,
+  SubscriptionRecord,
+  InvoiceRecord,
+  DealHealthScore,
+  QuotationItem,
+  NegotiationMessage,
+} from '../types';
+
+interface ParsedRow {
+  [column: string]: any;
+}
+
+// Helper to parse SQL INSERT INTO statements
+function parseTableInserts(sql: string, tableName: string): ParsedRow[] {
+  const regex = new RegExp(
+    `INSERT\\s+INTO\\s+${tableName}\\s*\\(([^)]+)\\)\\s*VALUES\\s*([\\s\\S]+?);`,
+    'gi'
+  );
+  const match = regex.exec(sql);
+  if (!match) return [];
+
+  const columnsStr = match[1];
+  const valuesBlock = match[2].trim();
+
+  const columns = columnsStr.split(',').map((c) => c.trim().toLowerCase());
+
+  // Parse individual value tuples: ('v1', 'v2', 123, true, NULL)
+  const rows: ParsedRow[] = [];
+  const tupleRegex = /\(([^)]+)\)/g;
+  let tupleMatch;
+
+  while ((tupleMatch = tupleRegex.exec(valuesBlock)) !== null) {
+    const rawTuple = tupleMatch[1];
+    const parsedValues: any[] = [];
+    
+    // Regex for SQL literals: strings in single quotes, numbers, booleans, NULL
+    const valRegex = /'((?:''|[^'])*)'|([^,\s]+)/g;
+    let valMatch;
+
+    while ((valMatch = valRegex.exec(rawTuple)) !== null) {
+      if (valMatch[1] !== undefined) {
+        // String value (unescape double single-quotes if any)
+        parsedValues.push(valMatch[1].replace(/''/g, "'"));
+      } else {
+        const rawVal = valMatch[2].trim();
+        if (rawVal.toUpperCase() === 'NULL') {
+          parsedValues.push(null);
+        } else if (rawVal.toLowerCase() === 'true') {
+          parsedValues.push(true);
+        } else if (rawVal.toLowerCase() === 'false') {
+          parsedValues.push(false);
+        } else if (!isNaN(Number(rawVal))) {
+          parsedValues.push(Number(rawVal));
+        } else {
+          parsedValues.push(rawVal);
+        }
+      }
+    }
+
+    if (parsedValues.length === columns.length) {
+      const rowObj: ParsedRow = {};
+      columns.forEach((col, idx) => {
+        rowObj[col] = parsedValues[idx];
+      });
+      rows.push(rowObj);
+    }
+  }
+
+  return rows;
+}
+
+export function parseSchemaSqlSeedData() {
+  const sql = rawSchemaSql;
+
+  const rawUsers = parseTableInserts(sql, 'users');
+  const rawCustomers = parseTableInserts(sql, 'customers');
+  const rawProducts = parseTableInserts(sql, 'products');
+  const rawQuotations = parseTableInserts(sql, 'quotations');
+  const rawQuoteItems = parseTableInserts(sql, 'quote_items');
+  const rawApprovals = parseTableInserts(sql, 'approvals');
+  const rawNegotiations = parseTableInserts(sql, 'negotiations');
+  const rawSubscriptions = parseTableInserts(sql, 'subscriptions');
+  const rawInvoices = parseTableInserts(sql, 'invoices');
+  const rawDealEvents = parseTableInserts(sql, 'deal_events');
+  const rawWarehouses = parseTableInserts(sql, 'warehouses');
+
+  // Map Rep ID -> Full Name
+  const userMap = new Map<string, string>();
+  rawUsers.forEach((u) => userMap.set(u.id, u.full_name));
+
+  // Map Customer ID -> Customer Obj
+  const customerMap = new Map<string, any>();
+  rawCustomers.forEach((c) => customerMap.set(c.id, c));
+
+  // 1. CUSTOMERS
+  const customers: Customer[] = rawCustomers.map((c, idx) => ({
+    id: `cust-${idx + 1}`,
+    name: c.company_name || 'Customer',
+    code: (c.company_name || 'CUST').substring(0, 4).toUpperCase() + '-ENT',
+    contactName: c.contact_name,
+    contactEmail: c.email,
+    tier: c.tier === 'GOLD' ? 'Enterprise' : c.tier === 'SILVER' ? 'Strategic' : 'Mid-Market',
+    creditLimit: c.tier === 'GOLD' ? 500000 : c.tier === 'SILVER' ? 250000 : 100000,
+    openBalance: idx % 2 === 0 ? 42500 : 118000,
+    accountManager: 'Sarah Jenkins',
+    shippingAddress: c.address || 'Enterprise HQ',
+  }));
+
+  // 2. PRODUCTS
+  const products: Product[] = rawProducts.map((p, idx) => ({
+    id: `prod-${idx + 1}`,
+    sku: p.sku,
+    name: p.name,
+    category: p.category || 'General',
+    description: p.description || '',
+    listPrice: Number(p.unit_price),
+    cogs: Number(p.unit_cost),
+    minMarginPct: p.category === 'Professional Services' ? 35.0 : p.category === 'Support' ? 50.0 : 18.0,
+    defaultDiscountPct: p.category === 'Hardware' ? 5.0 : 0.0,
+    upsellIds: idx === 0 ? ['prod-3', 'prod-5'] : [],
+    crossSellIds: idx === 0 ? ['prod-4', 'prod-2'] : [],
+    inStock: p.is_subscription ? 999 : 420,
+  }));
+
+  const productMap = new Map<string, Product>();
+  products.forEach((p, idx) => {
+    const rawP = rawProducts[idx];
+    if (rawP) productMap.set(rawP.id, p);
+  });
+
+  // 3. QUOTATIONS & ITEMS
+  const quoteItemsMap = new Map<string, QuotationItem[]>();
+  rawQuoteItems.forEach((qi, idx) => {
+    const prod = productMap.get(qi.product_id);
+    const item: QuotationItem = {
+      id: qi.id || `qi-${idx}`,
+      productId: prod?.id || 'prod-1',
+      productName: qi.product_name,
+      sku: prod?.sku || 'HW-SKU',
+      quantity: Number(qi.quantity),
+      unitPrice: Number(qi.unit_price),
+      cogs: Number(qi.unit_cost),
+      discountPct: Number(qi.discount_percent),
+      lineTotal: Number(qi.line_total),
+      marginPct: Number(
+        (
+          ((Number(qi.unit_price) * (1 - Number(qi.discount_percent) / 100) - Number(qi.unit_cost)) /
+            (Number(qi.unit_price) * (1 - Number(qi.discount_percent) / 100))) *
+          100
+        ).toFixed(1)
+      ),
+    };
+    const list = quoteItemsMap.get(qi.quotation_id) || [];
+    list.push(item);
+    quoteItemsMap.set(qi.quotation_id, list);
+  });
+
+  // Map Negotiations
+  const negotiationsMap = new Map<string, NegotiationMessage[]>();
+  rawNegotiations.forEach((n, idx) => {
+    const msg: NegotiationMessage = {
+      id: n.id || `msg-${idx}`,
+      quotationId: n.quotation_id,
+      senderRole: n.actor_type === 'USER' ? 'sales_rep' : 'customer',
+      senderName: n.actor_id ? userMap.get(n.actor_id) || 'Sales Rep' : 'Customer Contact',
+      timestamp: '2026-09-01 10:00',
+      message: n.notes || 'Counter offer details submitted.',
+      proposedDiscountPct: n.requested_discount_percent ? Number(n.requested_discount_percent) : undefined,
+    };
+    const list = negotiationsMap.get(n.quotation_id) || [];
+    list.push(msg);
+    negotiationsMap.set(n.quotation_id, list);
+  });
+
+  const quotations: Quotation[] = rawQuotations.map((q, idx) => {
+    const cust = customerMap.get(q.customer_id);
+    const repName = userMap.get(q.sales_rep_id) || 'Sarah Jenkins';
+    const items = quoteItemsMap.get(q.id) || [];
+    const negHistory = negotiationsMap.get(q.id) || [];
+
+    const statusMap: Record<string, Quotation['status']> = {
+      DRAFT: 'draft',
+      PENDING_APPROVAL: 'pending_approval',
+      APPROVED: 'approved',
+      NEGOTIATION: 'customer_countered',
+      CONFIRMED: 'accepted',
+      REJECTED: 'rejected',
+      CANCELLED: 'rejected',
+    };
+
+    return {
+      id: `q-${1000 + idx}`,
+      code: q.quote_number,
+      customerId: cust ? `cust-${rawCustomers.indexOf(cust) + 1}` : 'cust-1',
+      customerName: cust?.company_name || 'Acme Corp',
+      customerContact: cust?.contact_name || 'Marcus Vance',
+      customerEmail: cust?.email || 'm.vance@acme-corp.com',
+      createdDate: '2026-09-01',
+      validUntil: '2026-09-30',
+      salesRep: repName,
+      warehouseHub: idx % 2 === 0 ? 'Dallas (HUB-01)' : 'Chicago (HUB-02)',
+      status: statusMap[q.status] || 'draft',
+      requiresApproval: Boolean(q.approval_required),
+      approvalReason: q.approval_required ? 'Discount exceeds allowed rep limit threshold.' : undefined,
+      subtotal: Number(q.subtotal),
+      discountAmount: Number(q.discount_amount),
+      grandTotal: Number(q.total_amount),
+      totalCogs: Number(q.estimated_cost),
+      marginPct: Number(q.margin_percent),
+      deliveryRequestDate: '2026-09-20',
+      customerComments: 'Parsed live from PostgreSQL schema.sql seed queries.',
+      items,
+      negotiationHistory: negHistory,
+    };
+  });
+
+  // 4. APPROVALS
+  const approvals: ApprovalRecord[] = rawApprovals.map((a, idx) => {
+    const q = rawQuotations.find((rawQ) => rawQ.id === a.quotation_id);
+    const cust = q ? customerMap.get(q.customer_id) : null;
+    const statusVal = a.status === 'APPROVED' ? 'approved' : a.status === 'REJECTED' ? 'rejected' : 'pending';
+
+    return {
+      id: `app-${idx + 1}`,
+      quotationId: q ? `q-${1000 + rawQuotations.indexOf(q)}` : 'q-1000',
+      quotationCode: q?.quote_number || 'QT-2026-8492',
+      customerName: cust?.company_name || 'Acme Corp',
+      salesRep: 'Sarah Jenkins',
+      requestedDiscountPct: 18.5,
+      marginPct: q ? Number(q.margin_percent) : 33.9,
+      grandTotal: q ? Number(q.total_amount) : 12400.0,
+      triggerReason: a.comments || 'Discount exceeds Rep Max Threshold (10.0%)',
+      tier: a.approval_role === 'FINANCE' ? 'VP Sales Approval' : 'Manager Approval',
+      status: statusVal,
+      submittedAt: '2026-09-01 10:14',
+      reviewedBy: a.status === 'APPROVED' ? 'Alex Morgan (Sales Manager)' : undefined,
+      reviewedAt: a.status === 'APPROVED' ? '2026-09-01 11:30' : undefined,
+      rationale: a.status === 'APPROVED' ? a.comments : undefined,
+    };
+  });
+
+  // 5. FULFILLMENTS
+  const fulfillments: FulfillmentRecord[] = rawQuotations
+    .filter((q) => q.status === 'APPROVED' || q.status === 'CONFIRMED')
+    .map((q, idx) => {
+      const cust = customerMap.get(q.customer_id);
+      return {
+        id: `ful-${idx + 1}`,
+        quotationId: `q-${1000 + rawQuotations.indexOf(q)}`,
+        quotationCode: q.quote_number,
+        customerName: cust?.company_name || 'Acme Corp',
+        warehouseHub: idx % 2 === 0 ? 'Chicago (HUB-02)' : 'Dallas (HUB-01)',
+        itemsCount: 45,
+        status: idx === 0 ? 'dispatched' : 'delivered',
+        carrier: idx === 0 ? 'FedEx Freight Direct' : 'UPS Enterprise',
+        trackingNumber: idx === 0 ? 'FX-88492019-US' : '1Z9999999999999999',
+        dispatchDate: '2026-09-02',
+        estimatedDelivery: '2026-09-07',
+        notes: 'Order released and picked based on schema.sql warehouse inventory.',
+      };
+    });
+
+  // 6. SUBSCRIPTIONS
+  const subscriptions: SubscriptionRecord[] = rawSubscriptions.map((s, idx) => {
+    const cust = customerMap.get(s.customer_id);
+    return {
+      id: `sub-${idx + 1}`,
+      code: `SUB-${(cust?.company_name || 'CUST').substring(0, 4).toUpperCase()}-0${idx + 1}`,
+      customerName: cust?.company_name || 'Acme Corp',
+      planName: s.product_name || 'Care Plan 2yr + Premium Support',
+      mrr: Number(s.amount),
+      arr: Number(s.amount) * 12,
+      billingCycle: s.billing_cycle === 'YEARLY' ? 'Annual' : 'Monthly',
+      startDate: String(s.start_date).split(' ')[0],
+      renewalDate: String(s.next_billing_date).split(' ')[0],
+      status: s.status === 'ACTIVE' ? 'active' : 'pending_renewal',
+      autoRenew: true,
+      seats: Number(s.quantity),
+    };
+  });
+
+  // 7. INVOICES
+  const invoices: InvoiceRecord[] = rawInvoices.map((inv, idx) => {
+    const q = rawQuotations.find((rawQ) => rawQ.id === inv.quotation_id);
+    const cust = customerMap.get(inv.customer_id);
+    const statusMap: Record<string, InvoiceRecord['status']> = {
+      ISSUED: 'sent',
+      PAID: 'paid',
+      PARTIALLY_PAID: 'overdue',
+      OVERDUE: 'overdue',
+    };
+
+    return {
+      id: `inv-${idx + 1}`,
+      invoiceNumber: inv.invoice_number,
+      quotationCode: q?.quote_number || 'QT-2026-8495',
+      customerName: cust?.company_name || 'Acme Corp',
+      issueDate: '2026-09-02',
+      dueDate: String(inv.due_date).split(' ')[0],
+      totalAmount: Number(inv.total),
+      amountPaid: Number(inv.paid_amount),
+      status: statusMap[inv.status] || 'sent',
+      paymentTerms: 'Net 30',
+    };
+  });
+
+  // 8. DEAL HEALTH SCORES
+  const dealHealthScores: DealHealthScore[] = rawQuotations.map((q, idx) => {
+    const cust = customerMap.get(q.customer_id);
+    const score = Number(q.risk_score) || 75;
+    const riskLevel = score > 75 ? 'Moderate Risk' : score < 50 ? 'High Risk' : 'Low Risk';
+
+    return {
+      id: `dh-${idx + 1}`,
+      quotationCode: q.quote_number,
+      customerName: cust?.company_name || 'Acme Corp',
+      grandTotal: Number(q.total_amount),
+      overallScore: score,
+      marginScore: Math.min(100, Math.round(Number(q.margin_percent) * 2.2)),
+      velocityScore: 70,
+      engagementScore: 85,
+      riskLevel,
+      riskFactors: q.approval_required
+        ? ['Discount held in Manager Approval Queue', 'Hardware margin near rep threshold floor']
+        : [],
+      recommendedActions: ['Fast-track Manager Approval sign-off', 'Offer complimentary Care Plan'],
+    };
+  });
+
+  return {
+    customers,
+    products,
+    quotations,
+    approvals,
+    fulfillments,
+    subscriptions,
+    invoices,
+    dealHealthScores,
+  };
+}
