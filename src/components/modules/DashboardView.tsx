@@ -116,7 +116,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}
           >
             <Plus size={16} />
-            <span>+ New Quotation</span>
+            <span>New Quotation</span>
           </button>
         </div>
       </div>
