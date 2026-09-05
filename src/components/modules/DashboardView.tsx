@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Quotation, ApprovalRecord, FulfillmentRecord, SubscriptionRecord, DealHealthScore, ModuleType } from '../../types';
 import { Badge } from '../common/Badge';
 import {
   CheckSquare,
   ChevronRight,
+  ChevronLeft,
   Plus,
   Activity,
   Clock,
   CheckCircle2,
   MessageSquare,
-  Truck,
   AlertTriangle,
   Zap,
 } from 'lucide-react';
@@ -35,31 +35,80 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onSelectQuotation,
   onOpenCreateModal,
 }) => {
+  // 1. Activity Feed Filter & Pagination State
   const [activityFilter, setActivityFilter] = useState<'all' | 'approvals' | 'portal' | 'fulfillment'>('all');
+  const [activityPage, setActivityPage] = useState(1);
+  const activityItemsPerPage = 6;
+
+  // 2. Deal Health Diagnostics Risk Filter & Pagination State
+  const [dealHealthRiskFilter, setDealHealthRiskFilter] = useState<'all' | 'High Risk' | 'Moderate Risk' | 'Low Risk'>('all');
+  const [dealHealthPage, setDealHealthPage] = useState(1);
+  const dealHealthItemsPerPage = 5;
+
+  // 3. Active Quotation Proposals Table Pagination State
+  const [quotationPage, setQuotationPage] = useState(1);
+  const quotationItemsPerPage = 8;
 
   const pendingApprovals = approvals.filter((a) => a.status === 'pending');
   const openQuotations = quotations.filter((q) => q.status !== 'accepted' && q.status !== 'rejected');
-  const atRiskDeals = dealHealthScores.filter((d) => d.riskLevel === 'High Risk' || d.riskLevel === 'Moderate Risk');
-
   const pipelineValue = openQuotations.reduce((sum, q) => sum + q.grandTotal, 0);
 
   // Generate activities dynamically from database quotations & approvals
-  const activities = quotations.map((q, idx) => ({
-    id: `act-${q.id}`,
-    category: q.requiresApproval ? 'approvals' : q.status === 'customer_countered' ? 'portal' : 'fulfillment',
-    title: `${q.customerName} quotation (${q.code})`,
-    description: `Status: ${q.status.replace(/_/g, ' ').toUpperCase()} • Total: $${q.grandTotal.toLocaleString()} • Margin: ${q.marginPct}%`,
-    timestamp: `${(idx + 1) * 15} minutes ago`,
-    icon: q.requiresApproval ? AlertTriangle : q.status === 'customer_countered' ? MessageSquare : CheckCircle2,
-    iconColor: q.requiresApproval ? '#f5b544' : q.status === 'customer_countered' ? '#38d9ff' : '#31d38a',
-    badge: q.status.replace(/_/g, ' ').toUpperCase(),
-    badgeVariant: q.requiresApproval ? 'warning' : 'success',
-    module: 'quotations' as ModuleType,
-  }));
+  const activities = useMemo(() => {
+    return quotations.map((q, idx) => ({
+      id: `act-${q.id}`,
+      category: q.requiresApproval ? 'approvals' : q.status === 'customer_countered' ? 'portal' : 'fulfillment',
+      title: `${q.customerName} quotation (${q.code})`,
+      description: `Status: ${q.status.replace(/_/g, ' ').toUpperCase()} • Total: $${q.grandTotal.toLocaleString()} • Margin: ${q.marginPct}%`,
+      timestamp: `${(idx + 1) * 15} minutes ago`,
+      icon: q.requiresApproval ? AlertTriangle : q.status === 'customer_countered' ? MessageSquare : CheckCircle2,
+      iconColor: q.requiresApproval ? '#f5b544' : q.status === 'customer_countered' ? '#38d9ff' : '#31d38a',
+      badge: q.status.replace(/_/g, ' ').toUpperCase(),
+      badgeVariant: q.requiresApproval ? 'warning' : 'success',
+      module: 'quotations' as ModuleType,
+    }));
+  }, [quotations]);
 
-  const filteredActivities = activityFilter === 'all'
-    ? activities
-    : activities.filter((a) => a.category === activityFilter);
+  // Activity Feed Filter & Pagination Calculations
+  const filteredActivities = useMemo(() => {
+    if (activityFilter === 'all') return activities;
+    return activities.filter((a) => a.category === activityFilter);
+  }, [activities, activityFilter]);
+
+  const totalActivityPages = Math.ceil(filteredActivities.length / activityItemsPerPage) || 1;
+  const paginatedActivities = useMemo(() => {
+    const start = (activityPage - 1) * activityItemsPerPage;
+    return filteredActivities.slice(start, start + activityItemsPerPage);
+  }, [filteredActivities, activityPage, activityItemsPerPage]);
+
+  const handleActivityFilterChange = (filter: 'all' | 'approvals' | 'portal' | 'fulfillment') => {
+    setActivityFilter(filter);
+    setActivityPage(1);
+  };
+
+  // Deal Health Filter & Pagination Calculations
+  const filteredDealHealth = useMemo(() => {
+    if (dealHealthRiskFilter === 'all') return dealHealthScores;
+    return dealHealthScores.filter((d) => d.riskLevel === dealHealthRiskFilter);
+  }, [dealHealthScores, dealHealthRiskFilter]);
+
+  const totalDealHealthPages = Math.ceil(filteredDealHealth.length / dealHealthItemsPerPage) || 1;
+  const paginatedDealHealth = useMemo(() => {
+    const start = (dealHealthPage - 1) * dealHealthItemsPerPage;
+    return filteredDealHealth.slice(start, start + dealHealthItemsPerPage);
+  }, [filteredDealHealth, dealHealthPage, dealHealthItemsPerPage]);
+
+  const handleRiskFilterChange = (filter: 'all' | 'High Risk' | 'Moderate Risk' | 'Low Risk') => {
+    setDealHealthRiskFilter(filter);
+    setDealHealthPage(1);
+  };
+
+  // Quotations Table Pagination Calculations
+  const totalQuotationPages = Math.ceil(quotations.length / quotationItemsPerPage) || 1;
+  const paginatedQuotations = useMemo(() => {
+    const start = (quotationPage - 1) * quotationItemsPerPage;
+    return quotations.slice(start, start + quotationItemsPerPage);
+  }, [quotations, quotationPage, quotationItemsPerPage]);
 
   // Priority items dynamically created from schema.sql quotes requiring attention
   const priorityItems = quotations.slice(0, 3);
@@ -326,108 +375,169 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
       {/* 4. Recent Activity Feed + Deal Health Diagnostics */}
       <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1.2fr', gap: '20px', marginBottom: '24px' }}>
-        {/* Left Column: Activity Feed */}
-        <div className="glass-panel" style={{ marginBottom: 0 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Activity size={16} style={{ color: '#38d9ff' }} />
-              <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#f5f7fa', margin: 0 }}>
-                Recent Activity
-              </h3>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(255,255,255,0.03)', padding: '3px', borderRadius: '6px' }}>
-              {(['all', 'approvals', 'portal', 'fulfillment'] as const).map((filter) => (
-                <button
-                  key={filter}
-                  onClick={() => setActivityFilter(filter)}
-                  style={{
-                    border: 'none',
-                    background: activityFilter === filter ? 'rgba(56, 217, 255, 0.15)' : 'transparent',
-                    color: activityFilter === filter ? '#38d9ff' : '#9aa8ba',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    padding: '3px 8px',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    textTransform: 'capitalize',
-                  }}
-                >
-                  {filter}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {filteredActivities.map((item) => {
-              const IconComp = item.icon;
-              return (
-                <div
-                  key={item.id}
-                  style={{
-                    padding: '12px 14px',
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(255, 255, 255, 0.04)',
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '12px',
-                  }}
-                >
-                  <div
-                    style={{
-                      background: 'rgba(56, 217, 255, 0.15)',
-                      color: item.iconColor,
-                      padding: '8px',
-                      borderRadius: '6px',
-                      marginTop: '2px',
-                    }}
-                  >
-                    <IconComp size={16} />
-                  </div>
-
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                      <strong style={{ fontSize: '13px', fontWeight: 600, color: '#f5f7fa' }}>
-                        {item.title}
-                      </strong>
-                      <span style={{ fontSize: '11px', color: '#64748b' }}>
-                        {item.timestamp}
-                      </span>
-                    </div>
-
-                    <p style={{ fontSize: '12px', color: '#9aa8ba', margin: 0, lineHeight: 1.45 }}>
-                      {item.description}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Right Column: Deal Health Diagnostics */}
+        {/* Left Column: Activity Feed with Pagination */}
         <div className="glass-panel" style={{ marginBottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Activity size={16} style={{ color: '#38d9ff' }} />
+                <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#f5f7fa', margin: 0 }}>
+                  Recent Activity
+                </h3>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(255,255,255,0.03)', padding: '3px', borderRadius: '6px' }}>
+                {(['all', 'approvals', 'portal', 'fulfillment'] as const).map((filter) => (
+                  <button
+                    key={filter}
+                    onClick={() => handleActivityFilterChange(filter)}
+                    style={{
+                      border: 'none',
+                      background: activityFilter === filter ? 'rgba(56, 217, 255, 0.15)' : 'transparent',
+                      color: activityFilter === filter ? '#38d9ff' : '#9aa8ba',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      padding: '3px 8px',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      textTransform: 'capitalize',
+                    }}
+                  >
+                    {filter}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {paginatedActivities.map((item) => {
+                const IconComp = item.icon;
+                return (
+                  <div
+                    key={item.id}
+                    style={{
+                      padding: '12px 14px',
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(255, 255, 255, 0.04)',
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '12px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        background: 'rgba(56, 217, 255, 0.15)',
+                        color: item.iconColor,
+                        padding: '8px',
+                        borderRadius: '6px',
+                        marginTop: '2px',
+                      }}
+                    >
+                      <IconComp size={16} />
+                    </div>
+
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                        <strong style={{ fontSize: '13px', fontWeight: 600, color: '#f5f7fa' }}>
+                          {item.title}
+                        </strong>
+                        <span style={{ fontSize: '11px', color: '#64748b' }}>
+                          {item.timestamp}
+                        </span>
+                      </div>
+
+                      <p style={{ fontSize: '12px', color: '#9aa8ba', margin: 0, lineHeight: 1.45 }}>
+                        {item.description}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Activity Feed Pagination Footer */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginTop: '16px',
+              paddingTop: '12px',
+              borderTop: '1px solid rgba(255,255,255,0.06)',
+            }}
+          >
+            <span style={{ fontSize: '11px', color: '#9aa8ba' }}>
+              Showing {(activityPage - 1) * activityItemsPerPage + 1}–{Math.min(activityPage * activityItemsPerPage, filteredActivities.length)} of {filteredActivities.length} activities
+            </span>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <button
+                className="btn-glass btn-glass-secondary btn-sm"
+                onClick={() => setActivityPage((p) => Math.max(1, p - 1))}
+                disabled={activityPage === 1}
+                style={{ opacity: activityPage === 1 ? 0.4 : 1, padding: '2px 8px', fontSize: '11px', cursor: activityPage === 1 ? 'not-allowed' : 'pointer' }}
+              >
+                <ChevronLeft size={13} /> Prev
+              </button>
+              <span style={{ fontSize: '11px', color: '#f5f7fa', fontWeight: 600, padding: '0 4px' }}>
+                Page {activityPage} of {totalActivityPages}
+              </span>
+              <button
+                className="btn-glass btn-glass-secondary btn-sm"
+                onClick={() => setActivityPage((p) => Math.min(totalActivityPages, p + 1))}
+                disabled={activityPage === totalActivityPages}
+                style={{ opacity: activityPage === totalActivityPages ? 0.4 : 1, padding: '2px 8px', fontSize: '11px', cursor: activityPage === totalActivityPages ? 'not-allowed' : 'pointer' }}
+              >
+                Next <ChevronRight size={13} />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Deal Health Diagnostics with Pagination & Risk Filtering */}
+        <div className="glass-panel" style={{ marginBottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <AlertTriangle size={16} style={{ color: '#ff6b72' }} />
                 <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#f5f7fa', margin: 0 }}>
                   Deal Health Diagnostics
                 </h3>
               </div>
-              <button
-                className="btn-glass btn-glass-secondary btn-sm"
-                onClick={() => setActiveModule('quotations')}
-                style={{ fontSize: '11px' }}
-              >
-                View All ({dealHealthScores.length})
-              </button>
+              <span style={{ fontSize: '11px', color: '#38d9ff', fontWeight: 600 }}>
+                {dealHealthScores.length} Records
+              </span>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {dealHealthScores.map((score) => {
+            {/* Risk Level Filter Bar */}
+            <div style={{ display: 'flex', gap: '4px', marginBottom: '14px', background: 'rgba(255,255,255,0.03)', padding: '3px', borderRadius: '6px' }}>
+              {(['all', 'High Risk', 'Moderate Risk', 'Low Risk'] as const).map((filter) => (
+                <button
+                  key={filter}
+                  onClick={() => handleRiskFilterChange(filter)}
+                  style={{
+                    flex: 1,
+                    border: 'none',
+                    background: dealHealthRiskFilter === filter ? 'rgba(56, 217, 255, 0.15)' : 'transparent',
+                    color: dealHealthRiskFilter === filter ? '#38d9ff' : '#9aa8ba',
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    padding: '4px 6px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {filter === 'all' ? 'All' : filter.split(' ')[0]}
+                </button>
+              ))}
+            </div>
+
+            {/* Paginated Deal Health Cards */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {paginatedDealHealth.map((score) => {
                 const isHighRisk = score.riskLevel === 'High Risk';
                 const isModRisk = score.riskLevel === 'Moderate Risk';
 
@@ -437,20 +547,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     className="glass-card"
                     style={{
                       borderLeft: `3px solid ${isHighRisk ? '#ff6b72' : isModRisk ? '#f5b544' : '#31d38a'}`,
-                      padding: '12px',
+                      padding: '10px 12px',
                     }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
                       <div>
                         <strong style={{ fontSize: '13px', color: '#f5f7fa' }}>{score.customerName}</strong>
                         <div className="font-mono" style={{ fontSize: '11px', color: '#2f8cff' }}>{score.quotationCode}</div>
                       </div>
-                      <div className="font-mono" style={{ fontSize: '16px', fontWeight: 800, color: isHighRisk ? '#ff6b72' : isModRisk ? '#f5b544' : '#31d38a' }}>
+                      <div className="font-mono" style={{ fontSize: '15px', fontWeight: 800, color: isHighRisk ? '#ff6b72' : isModRisk ? '#f5b544' : '#31d38a' }}>
                         {score.overallScore}/100
                       </div>
                     </div>
 
-                    <div style={{ fontSize: '11px', color: '#9aa8ba', marginBottom: '8px' }}>
+                    <div style={{ fontSize: '11px', color: '#9aa8ba', marginBottom: '6px' }}>
                       Primary Flag: <span style={{ color: '#cbd5e1', fontWeight: 500 }}>{score.riskFactors[0] || 'Low margin or extended cycle'}</span>
                     </div>
 
@@ -469,17 +579,47 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
 
-          <button
-            className="btn-glass btn-glass-secondary"
-            onClick={() => setActiveModule('quotations')}
-            style={{ marginTop: '16px', width: '100%', justifyContent: 'center', fontSize: '12px' }}
+          {/* Deal Health Diagnostics Pagination Controls */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginTop: '14px',
+              paddingTop: '12px',
+              borderTop: '1px solid rgba(255,255,255,0.06)',
+            }}
           >
-            Manage Active Quotations
-          </button>
+            <span style={{ fontSize: '11px', color: '#9aa8ba' }}>
+              Showing {(dealHealthPage - 1) * dealHealthItemsPerPage + 1}–{Math.min(dealHealthPage * dealHealthItemsPerPage, filteredDealHealth.length)} of {filteredDealHealth.length}
+            </span>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <button
+                className="btn-glass btn-glass-secondary btn-sm"
+                onClick={() => setDealHealthPage((p) => Math.max(1, p - 1))}
+                disabled={dealHealthPage === 1}
+                style={{ opacity: dealHealthPage === 1 ? 0.4 : 1, padding: '2px 8px', fontSize: '11px', cursor: dealHealthPage === 1 ? 'not-allowed' : 'pointer' }}
+              >
+                <ChevronLeft size={13} /> Prev
+              </button>
+              <span style={{ fontSize: '11px', color: '#f5f7fa', fontWeight: 600, padding: '0 4px' }}>
+                Page {dealHealthPage} of {totalDealHealthPages}
+              </span>
+              <button
+                className="btn-glass btn-glass-secondary btn-sm"
+                onClick={() => setDealHealthPage((p) => Math.min(totalDealHealthPages, p + 1))}
+                disabled={dealHealthPage === totalDealHealthPages}
+                style={{ opacity: dealHealthPage === totalDealHealthPages ? 0.4 : 1, padding: '2px 8px', fontSize: '11px', cursor: dealHealthPage === totalDealHealthPages ? 'not-allowed' : 'pointer' }}
+              >
+                Next <ChevronRight size={13} />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* 5. Active Quotation Proposals Table */}
+      {/* 5. Active Quotation Proposals Table with Pagination */}
       <div className="glass-panel" style={{ marginBottom: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div>
@@ -487,7 +627,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               Active Quotation Proposals
             </h3>
             <span style={{ fontSize: '12px', color: '#9aa8ba' }}>
-              Showing real-time quotations requiring operational tracking
+              Showing real-time quotations requiring operational tracking ({quotations.length} Total)
             </span>
           </div>
 
@@ -495,7 +635,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             className="btn-glass btn-glass-secondary btn-sm"
             onClick={() => setActiveModule('quotations')}
           >
-            View Quotation Ledger ({quotations.length}) <ChevronRight size={13} />
+            View Full Quotation Ledger <ChevronRight size={13} />
           </button>
         </div>
 
@@ -513,7 +653,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </tr>
             </thead>
             <tbody>
-              {quotations.map((q) => (
+              {paginatedQuotations.map((q) => (
                 <tr key={q.id} className="clickable" onClick={() => onSelectQuotation(q)}>
                   <td className="font-mono" style={{ fontWeight: 700, color: '#2f8cff' }}>
                     {q.code}
@@ -552,6 +692,47 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Proposals Table Pagination Bar */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginTop: '16px',
+            paddingTop: '14px',
+            borderTop: '1px solid rgba(255,255,255,0.06)',
+          }}
+        >
+          <span style={{ fontSize: '12px', color: '#9aa8ba' }}>
+            Showing {(quotationPage - 1) * quotationItemsPerPage + 1} to{' '}
+            {Math.min(quotationPage * quotationItemsPerPage, quotations.length)} of {quotations.length} active quotation proposals
+          </span>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              className="btn-glass btn-glass-secondary btn-sm"
+              onClick={() => setQuotationPage((p) => Math.max(1, p - 1))}
+              disabled={quotationPage === 1}
+              style={{ opacity: quotationPage === 1 ? 0.4 : 1, cursor: quotationPage === 1 ? 'not-allowed' : 'pointer' }}
+            >
+              <ChevronLeft size={14} /> Prev
+            </button>
+
+            <span style={{ fontSize: '12px', color: '#f5f7fa', fontWeight: 600, padding: '0 6px' }}>
+              Page {quotationPage} of {totalQuotationPages}
+            </span>
+
+            <button
+              className="btn-glass btn-glass-secondary btn-sm"
+              onClick={() => setQuotationPage((p) => Math.min(totalQuotationPages, p + 1))}
+              disabled={quotationPage === totalQuotationPages}
+              style={{ opacity: quotationPage === totalQuotationPages ? 0.4 : 1, cursor: quotationPage === totalQuotationPages ? 'not-allowed' : 'pointer' }}
+            >
+              Next <ChevronRight size={14} />
+            </button>
+          </div>
         </div>
       </div>
     </div>
