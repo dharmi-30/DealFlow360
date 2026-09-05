@@ -25,9 +25,11 @@ from app.db.database import Base
 
 class UserRole(str, enum.Enum):
     ADMIN = "ADMIN"
+    SALES_OPS_DIRECTOR = "SALES_OPS_DIRECTOR"
     SALES_REP = "SALES_REP"
     SALES_MANAGER = "SALES_MANAGER"
     FINANCE = "FINANCE"
+    CUSTOMER = "CUSTOMER"
 
 
 class CustomerTier(str, enum.Enum):

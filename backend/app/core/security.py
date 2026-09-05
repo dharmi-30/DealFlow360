@@ -132,10 +132,15 @@ class RequireRole:
 
 # Role protection dependencies
 require_admin = RequireRole(UserRole.ADMIN)
-require_sales_manager = RequireRole(UserRole.SALES_MANAGER, UserRole.ADMIN)
+require_sales_ops_director = RequireRole(UserRole.SALES_OPS_DIRECTOR, UserRole.ADMIN)
+require_sales_manager = RequireRole(UserRole.SALES_MANAGER, UserRole.SALES_OPS_DIRECTOR, UserRole.ADMIN)
 require_finance = RequireRole(UserRole.FINANCE, UserRole.ADMIN)
 require_sales_rep = RequireRole(
-    UserRole.SALES_REP, UserRole.SALES_MANAGER, UserRole.ADMIN
+    UserRole.SALES_REP, UserRole.SALES_MANAGER, UserRole.SALES_OPS_DIRECTOR, UserRole.ADMIN
+)
+require_customer = RequireRole(UserRole.CUSTOMER)
+require_internal_user = RequireRole(
+    UserRole.ADMIN, UserRole.SALES_OPS_DIRECTOR, UserRole.SALES_MANAGER, UserRole.SALES_REP, UserRole.FINANCE
 )
 
 

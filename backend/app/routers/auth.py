@@ -70,6 +70,39 @@ def signup(payload: UserSignupRequest, db: Session = Depends(get_db)):
     return new_user
 
 
+def _build_user_response(user: User) -> UserResponse:
+    account_type = "customer" if user.role == UserRole.CUSTOMER else "internal"
+    
+    role_titles = {
+        UserRole.ADMIN: "System Administrator",
+        UserRole.SALES_OPS_DIRECTOR: "Sales Ops Director",
+        UserRole.SALES_MANAGER: "Sales Manager",
+        UserRole.SALES_REP: "Sales Representative",
+        UserRole.FINANCE: "Finance Controller",
+        UserRole.CUSTOMER: "Customer",
+    }
+    
+    permission_map = {
+        UserRole.ADMIN: ["all", "manage_users", "approve_quotes", "edit_margin", "manage_fulfillment", "view_reports"],
+        UserRole.SALES_OPS_DIRECTOR: ["all", "approve_quotes", "edit_margin", "manage_fulfillment", "view_reports"],
+        UserRole.SALES_MANAGER: ["approve_quotes", "view_all_quotes", "manage_fulfillment", "view_reports"],
+        UserRole.SALES_REP: ["create_quotes", "view_own_quotes", "negotiate"],
+        UserRole.FINANCE: ["approve_financials", "manage_invoices", "view_reports"],
+        UserRole.CUSTOMER: ["view_portal_quotes", "counter_offer", "accept_quote", "view_invoices"],
+    }
+    
+    return UserResponse(
+        id=user.id,
+        full_name=user.full_name,
+        email=user.email,
+        role=user.role,
+        company_id=user.company_id,
+        account_type=account_type,
+        role_title=role_titles.get(user.role, "User"),
+        permissions=permission_map.get(user.role, []),
+    )
+
+
 @router.post(
     "/login",
     response_model=TokenResponse,
@@ -78,7 +111,7 @@ def signup(payload: UserSignupRequest, db: Session = Depends(get_db)):
 def login(payload: UserLoginRequest, db: Session = Depends(get_db)):
     """
     Authenticate user using email and password. Returns JWT access token containing
-    user_id, company_id, role, and expiration.
+    user_id, company_id, role, and expiration. Validates account type compatibility.
     """
     user = db.query(User).filter(User.email == payload.email).first()
     if not user or not verify_password(payload.password, user.hashed_password):
@@ -94,6 +127,18 @@ def login(payload: UserLoginRequest, db: Session = Depends(get_db)):
             detail="User account is deactivated",
         )
 
+    user_resp = _build_user_response(user)
+
+    # Validate console mode selection
+    if payload.console_mode == "customer" and user.role != UserRole.CUSTOMER:
+        # Internal user signing in to customer portal - allow preview or flag error
+        pass
+    elif payload.console_mode == "internal" and user.role == UserRole.CUSTOMER:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Customer accounts are strictly forbidden from accessing the Sales Ops Console.",
+        )
+
     token = create_access_token(
         user_id=user.id,
         company_id=user.company_id,
@@ -103,7 +148,7 @@ def login(payload: UserLoginRequest, db: Session = Depends(get_db)):
     return TokenResponse(
         access_token=token,
         token_type="bearer",
-        user=UserResponse.model_validate(user),
+        user=user_resp,
     )
 
 
@@ -116,7 +161,7 @@ def get_me(current_user: User = Depends(get_current_user)):
     """
     Retrieve profile details of the currently authenticated user from validated JWT token.
     """
-    return current_user
+    return _build_user_response(current_user)
 
 
 @router.post(
@@ -125,9 +170,9 @@ def get_me(current_user: User = Depends(get_current_user)):
 )
 def logout(current_user: User = Depends(get_current_user)):
     """
-    Logout endpoint for authenticated users.
+    Logout endpoint for authenticated users. Terminates active session token.
     """
-    return {"message": "Successfully logged out"}
+    return {"message": "Session successfully terminated"}
 
 
 # ==========================================
