@@ -4,6 +4,7 @@ import { parseSchemaSqlSeedData } from '../lib/sqlSeedParser';
 const parsedSeed = parseSchemaSqlSeedData();
 
 export const INITIAL_CUSTOMERS = parsedSeed.customers;
+export const INITIAL_CATEGORIES = parsedSeed.categories;
 export const INITIAL_PRODUCTS = parsedSeed.products;
 export const INITIAL_QUOTATIONS = parsedSeed.quotations;
 export const INITIAL_APPROVALS = parsedSeed.approvals;

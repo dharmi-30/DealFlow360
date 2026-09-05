@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Product } from '../../types';
+import { Product, Category } from '../../types';
 import {
   Package,
   Layers,
@@ -22,6 +22,7 @@ import {
 
 interface ProductsViewProps {
   products: Product[];
+  categories?: Category[];
   onAddProduct?: (product: Product) => void;
   onArchiveProducts?: (productIds: string[]) => void;
   onDeleteProducts?: (productIds: string[]) => void;
@@ -142,11 +143,18 @@ const EXTENDED_PRODUCTS: DetailedProductItem[] = [
 
 export const ProductsView: React.FC<ProductsViewProps> = ({
   products = [],
+  categories = [],
   onAddProduct,
   onArchiveProducts,
   onDeleteProducts,
   onUpdateProduct,
 }) => {
+  const categoryOptions: Category[] = categories.length > 0 ? categories : [
+    { id: 'cat-1', name: 'Hardware' },
+    { id: 'cat-2', name: 'Software Subscription' },
+    { id: 'cat-3', name: 'Professional Services' },
+    { id: 'cat-4', name: 'Support' },
+  ];
   const [activeTab, setActiveTab] = useState<'catalog' | 'discount-config'>('catalog');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -1201,10 +1209,11 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                     value={newProductForm.category}
                     onChange={(e) => setNewProductForm({ ...newProductForm, category: e.target.value })}
                   >
-                    <option value="Hardware">Hardware</option>
-                    <option value="Software Subscription">Software Subscription</option>
-                    <option value="Professional Services">Professional Services</option>
-                    <option value="Support">Support</option>
+                    {categoryOptions.map((cat) => (
+                      <option key={cat.id} value={cat.name}>
+                        {cat.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -1413,10 +1422,11 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                     value={editProductForm.category}
                     onChange={(e) => setEditProductForm({ ...editProductForm, category: e.target.value })}
                   >
-                    <option value="Hardware">Hardware</option>
-                    <option value="Software Subscription">Software Subscription</option>
-                    <option value="Professional Services">Professional Services</option>
-                    <option value="Support">Support</option>
+                    {categoryOptions.map((cat) => (
+                      <option key={cat.id} value={cat.name}>
+                        {cat.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
 

@@ -3,6 +3,7 @@ import {
   ModuleType,
   ViewMode,
   Product,
+  Category,
   Quotation,
   ApprovalRecord,
   FulfillmentRecord,
@@ -13,6 +14,7 @@ import {
 } from './types';
 import {
   INITIAL_CUSTOMERS,
+  INITIAL_CATEGORIES,
   INITIAL_PRODUCTS,
   INITIAL_QUOTATIONS,
   INITIAL_APPROVALS,
@@ -81,6 +83,14 @@ export const App: React.FC = () => {
 
   // Core Operational Datasets State with localStorage Persistence
   const [customers] = useState(INITIAL_CUSTOMERS);
+  const [categories] = useState<Category[]>(() => {
+    try {
+      const saved = localStorage.getItem('df360_categories');
+      return saved ? JSON.parse(saved) : INITIAL_CATEGORIES;
+    } catch {
+      return INITIAL_CATEGORIES;
+    }
+  });
   const [products, setProducts] = useState<Product[]>(() => {
     try {
       const saved = localStorage.getItem('df360_products');
@@ -628,6 +638,7 @@ export const App: React.FC = () => {
               {activeModule === 'products' && (
                 <ProductsView
                   products={products}
+                  categories={categories}
                   onAddProduct={handleAddProduct}
                   onArchiveProducts={handleArchiveProducts}
                   onDeleteProducts={handleDeleteProducts}

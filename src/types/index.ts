@@ -64,6 +64,11 @@ export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'partially_paid' | 'over
 
 export type WarehouseHub = 'Dallas (HUB-01)' | 'Chicago (HUB-02)' | 'Frankfurt (HUB-03)';
 
+export interface Category {
+  id: string;
+  name: string;
+}
+
 export interface Product {
   id: string;
   sku: string;

@@ -2,6 +2,7 @@ import rawSchemaSql from '../../schema.sql?raw';
 import {
   Customer,
   Product,
+  Category,
   Quotation,
   ApprovalRecord,
   FulfillmentRecord,
@@ -81,6 +82,7 @@ export function parseSchemaSqlSeedData() {
 
   const rawUsers = parseTableInserts(sql, 'users');
   const rawCustomers = parseTableInserts(sql, 'customers');
+  const rawCategories = parseTableInserts(sql, 'categories');
   const rawProducts = parseTableInserts(sql, 'products');
   const rawQuotations = parseTableInserts(sql, 'quotations');
   const rawQuoteItems = parseTableInserts(sql, 'quote_items');
@@ -90,6 +92,12 @@ export function parseSchemaSqlSeedData() {
   const rawInvoices = parseTableInserts(sql, 'invoices');
   const rawDealEvents = parseTableInserts(sql, 'deal_events');
   const rawWarehouses = parseTableInserts(sql, 'warehouses');
+
+  // Categories
+  const categories: Category[] = rawCategories.map((c) => ({
+    id: c.id,
+    name: c.name,
+  }));
 
   // Map Rep ID -> Full Name
   const userMap = new Map<string, string>();
@@ -366,6 +374,7 @@ export function parseSchemaSqlSeedData() {
 
   return {
     customers,
+    categories,
     products,
     quotations,
     approvals,

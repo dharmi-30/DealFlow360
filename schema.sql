@@ -141,6 +141,15 @@ CREATE TABLE customers (
 
 
 -- =============================================================================
+-- TABLE 3.5: CATEGORIES (Product & Service Categories)
+-- =============================================================================
+CREATE TABLE categories (
+    id   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(255) NOT NULL UNIQUE
+);
+
+
+-- =============================================================================
 -- TABLE 4: PRODUCTS (Catalog Items)
 -- =============================================================================
 CREATE TABLE products (
@@ -467,6 +476,13 @@ INSERT INTO customers (id, company_id, company_name, contact_name, email, phone,
 ('c4eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Delta LLC', 'Patricia Morales', 'p.morales@deltallc.net', '+1-555-0167', '1200 Logistics Center Blvd, Atlanta, GA 30303', 'GOLD', 'ACTIVE'),
 ('c5eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Nova Retail', 'Jason Vance', 'j.vance@novaretail.com', '+1-555-0122', '500 Market St, San Francisco, CA 94105', 'BRONZE', 'ACTIVE'),
 ('c6eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Orion Ltd', 'Victoria Sterling', 'v.sterling@orion.co.uk', '+44-20-7946-0912', '10 Park Lane, London, UK', 'GOLD', 'ACTIVE');
+
+-- 3.5. CATEGORIES
+INSERT INTO categories (id, name) VALUES
+('cat-11111111-1111-1111-1111-111111111111', 'Hardware'),
+('cat-22222222-2222-2222-2222-222222222222', 'Software Subscription'),
+('cat-33333333-3333-3333-3333-333333333333', 'Professional Services'),
+('cat-44444444-4444-4444-4444-444444444444', 'Support');
 
 -- 4. PRODUCTS
 INSERT INTO products (id, company_id, name, sku, category, description, unit_price, unit_cost, tax_rate, is_subscription, active) VALUES
