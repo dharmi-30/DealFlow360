@@ -82,7 +82,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             Operational Command Center
           </h1>
           <p className="page-subheading" style={{ fontSize: '13px', color: '#9aa8ba', marginTop: '4px' }}>
-            Immediate Action Required: <strong style={{ color: '#f5b544' }}>{pendingApprovals.length} approvals pending</strong> and <strong style={{ color: '#ff6b72' }}>{atRiskDeals.length} deals at-risk</strong> today.
+            Immediate Action Required: <strong style={{ color: '#f5b544' }}>{pendingApprovals.length} approvals pending</strong> and <strong style={{ color: '#38d9ff' }}>{openQuotations.length} active proposals</strong> today.
           </p>
         </div>
 
@@ -218,47 +218,47 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </div>
 
-        {/* KPI 3: At-Risk Deals */}
+        {/* KPI 3: Active Subscriptions */}
         <div
           className="kpi-glass-card clickable"
-          onClick={() => setActiveModule('deal-health')}
-          style={{ borderLeft: '3px solid #ff6b72' }}
+          onClick={() => setActiveModule('subscriptions')}
+          style={{ borderLeft: '3px solid #31d38a' }}
         >
           <div className="kpi-head" style={{ marginBottom: '12px' }}>
             <span className="kpi-label" style={{ fontSize: '13px', fontWeight: 600, color: '#9aa8ba' }}>
-              At-Risk Deals
+              Active Subscriptions
             </span>
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                background: 'rgba(255, 107, 114, 0.12)',
+                background: 'rgba(49, 211, 138, 0.12)',
                 padding: '3px 8px',
                 borderRadius: '12px',
                 fontSize: '11px',
                 fontWeight: 600,
-                color: '#ff6b72',
+                color: '#31d38a',
               }}
             >
-              Requires Action
+              Recurring Revenue
             </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '6px' }}>
-            <div className="kpi-main-val font-mono" style={{ fontSize: '28px', fontWeight: 800, color: '#ff6b72' }}>
-              {atRiskDeals.length}
+            <div className="kpi-main-val font-mono" style={{ fontSize: '28px', fontWeight: 800, color: '#31d38a' }}>
+              {subscriptions.length}
             </div>
             <span style={{ fontSize: '13px', color: '#9aa8ba', fontWeight: 500 }}>
-              flagged by Deal Health
+              active ARR accounts
             </span>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
             <span style={{ fontSize: '12px', color: '#9aa8ba' }}>
-              Risk scores derived from schema.sql
+              Managed in Subscriptions workspace
             </span>
-            <ChevronRight size={14} style={{ color: '#ff6b72' }} />
+            <ChevronRight size={14} style={{ color: '#31d38a' }} />
           </div>
         </div>
       </div>

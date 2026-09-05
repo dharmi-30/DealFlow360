@@ -30,7 +30,6 @@ import { ApprovalsView } from './components/modules/ApprovalsView';
 import { FulfillmentView } from './components/modules/FulfillmentView';
 import { SubscriptionsView } from './components/modules/SubscriptionsView';
 import { InvoicesView } from './components/modules/InvoicesView';
-import { DealHealthView } from './components/modules/DealHealthView';
 import { ReportsView } from './components/modules/ReportsView';
 import { ProductsView } from './components/modules/ProductsView';
 import { CustomerPortalView } from './components/customer/CustomerPortalView';
@@ -544,16 +543,6 @@ export const App: React.FC = () => {
                   invoices={invoices}
                   onMarkPaid={handleMarkPaid}
                   onSendReminder={handleSendInvoiceReminder}
-                />
-              )}
-
-              {activeModule === 'deal-health' && (
-                <DealHealthView
-                  dealHealthScores={dealHealthScores}
-                  onOpenQuotation={(code) => {
-                    setActiveModule('quotations');
-                    addToast('info', `Opening Quotation ${code}`, `Navigated to Quotations workspace for inspection.`);
-                  }}
                 />
               )}
 

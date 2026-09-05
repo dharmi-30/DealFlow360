@@ -5,7 +5,6 @@ export type ModuleType =
   | 'fulfillment'
   | 'subscriptions'
   | 'invoices'
-  | 'deal-health'
   | 'reports'
   | 'products';
 
