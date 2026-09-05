@@ -104,7 +104,13 @@ export const App: React.FC = () => {
   const [fulfillments, setFulfillments] = useState<FulfillmentRecord[]>(() => {
     try {
       const saved = localStorage.getItem('df360_fulfillments');
-      return saved ? JSON.parse(saved) : INITIAL_FULFILLMENT;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.some((f: any) => f.status === 'pending_pick' || f.status === 'packing')) {
+          return parsed;
+        }
+      }
+      return INITIAL_FULFILLMENT;
     } catch {
       return INITIAL_FULFILLMENT;
     }

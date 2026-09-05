@@ -264,22 +264,34 @@ export function parseSchemaSqlSeedData() {
 
   // 5. FULFILLMENTS
   const fulfillments: FulfillmentRecord[] = rawQuotations
-    .filter((q) => q.status === 'APPROVED' || q.status === 'CONFIRMED')
     .map((q, idx) => {
       const cust = customerMap.get(q.customer_id);
+      const quoteItems = quoteItemsMap.get(q.id) || [];
+      const totalUnits = quoteItems.reduce((sum, item) => sum + item.quantity, 0) || 12;
+
+      let status: FulfillmentStatus = 'pending_pick';
+      if (idx === 0) status = 'pending_pick';
+      else if (idx === 1) status = 'packing';
+      else if (idx === 2) status = 'dispatched';
+      else status = 'delivered';
+
       return {
         id: `ful-${idx + 1}`,
         quotationId: `q-${1000 + rawQuotations.indexOf(q)}`,
         quotationCode: q.quote_number,
         customerName: cust?.company_name || 'Acme Corp',
-        warehouseHub: idx % 2 === 0 ? 'Chicago (HUB-02)' : 'Dallas (HUB-01)',
-        itemsCount: 45,
-        status: idx === 0 ? 'dispatched' : 'delivered',
-        carrier: idx === 0 ? 'FedEx Freight Direct' : 'UPS Enterprise',
-        trackingNumber: idx === 0 ? 'FX-88492019-US' : '1Z9999999999999999',
-        dispatchDate: '2026-09-02',
+        warehouseHub: idx % 3 === 0 ? 'Dallas (HUB-01)' : idx % 3 === 1 ? 'Chicago (HUB-02)' : 'Frankfurt (HUB-03)',
+        itemsCount: totalUnits,
+        status,
+        carrier: status === 'dispatched' || status === 'delivered' ? 'FedEx Freight Direct' : undefined,
+        trackingNumber: status === 'dispatched' || status === 'delivered' ? `FX-8849201${idx}-US` : undefined,
+        dispatchDate: status === 'dispatched' || status === 'delivered' ? '2026-09-02' : undefined,
         estimatedDelivery: '2026-09-07',
-        notes: 'Order released and picked based on schema.sql warehouse inventory.',
+        notes: status === 'pending_pick'
+          ? 'Quotation approved. Awaiting warehouse pick and palletizing.'
+          : status === 'packing'
+          ? 'Items picked. Packing and preparing carrier dispatch.'
+          : 'Order released and picked based on schema.sql warehouse inventory.',
       };
     });
 
