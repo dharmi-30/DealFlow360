@@ -161,6 +161,32 @@ export const QuotationCreateModal: React.FC<QuotationCreateModalProps> = ({
     setItems(items.filter((_, i) => i !== index));
   };
 
+  const handleAddNewLineItem = () => {
+    const availableProd = products.find((p) => !items.some((i) => i.productId === p.id)) || products[0];
+    if (!availableProd) return;
+
+    const grossPrice = availableProd.listPrice * 1;
+    const discountVal = (grossPrice * availableProd.defaultDiscountPct) / 100;
+    const lineTotal = grossPrice - discountVal;
+    const itemTotalCogs = availableProd.cogs * 1;
+    const marginPct = lineTotal > 0 ? ((lineTotal - itemTotalCogs) / lineTotal) * 100 : 0;
+
+    const newItem: QuotationItem = {
+      id: `qi-new-${Date.now()}-${items.length + 1}`,
+      productId: availableProd.id,
+      productName: availableProd.name,
+      sku: availableProd.sku,
+      quantity: 1,
+      unitPrice: availableProd.listPrice,
+      cogs: availableProd.cogs,
+      discountPct: availableProd.defaultDiscountPct,
+      lineTotal,
+      marginPct,
+    };
+
+    setItems((prev) => [...prev, newItem]);
+  };
+
   // Calculations
   const subtotal = items.reduce((acc, item) => acc + item.unitPrice * item.quantity, 0);
   const grandTotal = items.reduce((acc, item) => acc + item.lineTotal, 0);
@@ -339,7 +365,7 @@ export const QuotationCreateModal: React.FC<QuotationCreateModalProps> = ({
             <div style={{ marginBottom: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
                 <span style={{ fontSize: '13px', fontWeight: 700, color: '#f5f7fa' }}>Line Items Ledger</span>
-                <button type="button" className="btn-glass btn-glass-secondary btn-sm" onClick={() => handleItemChange(0, 'quantity', items[0].quantity)}>
+                <button type="button" className="btn-glass btn-glass-secondary btn-sm" onClick={handleAddNewLineItem}>
                   <Plus size={14} /> Add Line Item
                 </button>
               </div>
@@ -348,12 +374,13 @@ export const QuotationCreateModal: React.FC<QuotationCreateModalProps> = ({
                 <table className="table-glass">
                   <thead>
                     <tr>
-                      <th style={{ width: '30%' }}>Product</th>
-                      <th style={{ width: '12%' }} className="number-cell">Qty</th>
-                      <th style={{ width: '15%' }} className="number-cell">Price</th>
-                      <th style={{ width: '15%' }} className="number-cell">Discount</th>
-                      <th style={{ width: '12%' }} className="number-cell">Limit</th>
-                      <th style={{ width: '16%', textAlign: 'center' }}>Status</th>
+                      <th style={{ width: '32%' }}>Product</th>
+                      <th style={{ width: '10%' }} className="number-cell">Qty</th>
+                      <th style={{ width: '14%' }} className="number-cell">Price</th>
+                      <th style={{ width: '14%' }} className="number-cell">Discount</th>
+                      <th style={{ width: '10%' }} className="number-cell">Limit</th>
+                      <th style={{ width: '14%', textAlign: 'center' }}>Status</th>
+                      <th style={{ width: '6%', textAlign: 'center' }}>Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -365,7 +392,18 @@ export const QuotationCreateModal: React.FC<QuotationCreateModalProps> = ({
                       return (
                         <tr key={item.id}>
                           <td>
-                            <strong style={{ color: '#f5f7fa', fontSize: '13px' }}>{item.productName}</strong>
+                            <select
+                              className="input-glass-select"
+                              value={item.productId}
+                              onChange={(e) => handleItemChange(idx, 'productId', e.target.value)}
+                              style={{ padding: '4px 6px', fontSize: '12px', width: '100%', color: '#f5f7fa', fontWeight: 600 }}
+                            >
+                              {products.map((p) => (
+                                <option key={p.id} value={p.id}>
+                                  {p.name} (${p.listPrice.toLocaleString()})
+                                </option>
+                              ))}
+                            </select>
                           </td>
                           <td className="number-cell font-mono">
                             <input
@@ -432,6 +470,28 @@ export const QuotationCreateModal: React.FC<QuotationCreateModalProps> = ({
                                 OK
                               </span>
                             )}
+                          </td>
+                          <td style={{ textAlign: 'center' }}>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveItem(idx)}
+                              disabled={items.length <= 1}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                color: items.length > 1 ? '#ff6b72' : '#64748b',
+                                cursor: items.length > 1 ? 'pointer' : 'not-allowed',
+                                padding: '4px',
+                                borderRadius: '4px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                opacity: items.length > 1 ? 1 : 0.4,
+                              }}
+                              title={items.length > 1 ? 'Remove Line Item' : 'At least 1 line item is required'}
+                            >
+                              <Trash2 size={14} />
+                            </button>
                           </td>
                         </tr>
                       );
