@@ -54,7 +54,7 @@ export const ApprovalsView: React.FC<ApprovalsViewProps> = ({
               Governance & Compliance
             </span>
             <span style={{ color: 'rgba(255,255,255,0.2)' }}>•</span>
-            <span style={{ fontSize: '12px', color: '#9aa8ba' }}>Data Loaded from schema.sql</span>
+            <span style={{ fontSize: '12px', color: '#9aa8ba' }}>Discount Governance & Compliance</span>
           </div>
           <h1 className="page-title" style={{ fontSize: '22px', fontWeight: 800, color: '#f5f7fa', margin: 0 }}>
             Approval Router
@@ -138,7 +138,7 @@ export const ApprovalsView: React.FC<ApprovalsViewProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <CheckSquare size={16} style={{ color: '#38d9ff' }} />
             <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#f5f7fa', margin: 0 }}>
-              Governance Approval Queue (Parsed from schema.sql)
+              Governance Approval Queue
             </h3>
           </div>
           <span style={{ fontSize: '12px', color: '#9aa8ba' }}>

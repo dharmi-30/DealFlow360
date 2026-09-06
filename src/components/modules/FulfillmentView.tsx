@@ -168,7 +168,7 @@ export const FulfillmentView: React.FC<FulfillmentViewProps> = ({
               Logistics & Fulfillment
             </span>
             <span style={{ color: 'rgba(255,255,255,0.2)' }}>•</span>
-            <span style={{ fontSize: '12px', color: '#9aa8ba' }}>Multi-Hub Inventory Split Engine (schema.sql)</span>
+            <span style={{ fontSize: '12px', color: '#9aa8ba' }}>Multi-Hub Inventory Split Engine</span>
           </div>
           <h1 className="page-title" style={{ fontSize: '22px', fontWeight: 800, color: '#f5f7fa', margin: 0 }}>
             Fulfillment Operations & Stocks Management
@@ -261,7 +261,7 @@ export const FulfillmentView: React.FC<FulfillmentViewProps> = ({
                 {totalSKUs.toLocaleString()}
               </div>
               <div style={{ fontSize: '11px', color: '#38d9ff', marginTop: '4px', fontWeight: 600 }}>
-                Across 4 Regional Hubs (schema.sql)
+                Across 4 Regional Hubs
               </div>
             </div>
 

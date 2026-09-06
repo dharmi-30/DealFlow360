@@ -157,7 +157,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
           <div className="kpi-main-val" style={{ color: '#2f8cff' }}>
             {quotesCount} Quotes
           </div>
-          <div className="kpi-sub-label">Total proposals parsed from schema.sql</div>
+          <div className="kpi-sub-label">Total proposals in current reporting period</div>
         </div>
 
         {/* Metric 2: Average Approval Time */}

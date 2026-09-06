@@ -124,7 +124,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </span>
             <span style={{ color: 'rgba(255,255,255,0.2)' }}>•</span>
             <span style={{ fontSize: '12px', color: '#9aa8ba', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <Clock size={12} /> Seed Data Loaded from schema.sql
+              <Clock size={12} /> Live Data
             </span>
           </div>
           <h1 className="page-title" style={{ fontSize: '22px', fontWeight: 800, color: '#f5f7fa', margin: 0 }}>

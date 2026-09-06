@@ -40,7 +40,7 @@ export const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
         <div>
           <h1 className="page-title">Subscriptions & Recurring Billing</h1>
           <p className="page-subheading">
-            Commercial contract management, recurring revenue lines, and automated billing schedule (schema.sql).
+            Commercial contract management, recurring revenue lines, and automated billing schedule.
           </p>
         </div>
 
@@ -118,7 +118,7 @@ export const SubscriptionsView: React.FC<SubscriptionsViewProps> = ({
       <div className="glass-panel" style={{ padding: '20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
           <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#f5f7fa', margin: 0 }}>
-            Subscriptions Queue (Parsed from schema.sql)
+            Active Subscriptions Queue
           </h3>
           <span style={{ fontSize: '12px', color: '#9aa8ba' }}>
             Click row to inspect contract line detail

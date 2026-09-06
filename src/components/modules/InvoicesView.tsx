@@ -37,7 +37,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
         <div>
           <h1 className="page-title">Invoices & Financial Ledger</h1>
           <p className="page-subheading">
-            Accounts receivable, quantity-based partial invoicing, and commercial payment reconciliation (schema.sql).
+            Accounts receivable, quantity-based partial invoicing, and commercial payment reconciliation.
           </p>
         </div>
 
@@ -97,7 +97,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
       >
         <Info size={18} style={{ color: '#38d9ff', flexShrink: 0 }} />
         <span>
-          <strong>Fulfillment Invoicing Policy:</strong> Invoicing ledger entries are linked directly to schema.sql quotation records.
+          <strong>Fulfillment Invoicing Policy:</strong> Invoicing ledger entries are linked directly to their originating quotation records.
         </span>
       </div>
 
@@ -105,7 +105,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
       <div className="glass-panel" style={{ padding: '20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
           <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#f5f7fa', margin: 0 }}>
-            Invoices List (Parsed from schema.sql)
+            Invoices Ledger
           </h3>
           <span style={{ fontSize: '12px', color: '#9aa8ba' }}>
             Select invoice row to inspect detail & ledger timeline

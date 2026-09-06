@@ -150,7 +150,7 @@ CREATE TABLE products (
     sku             VARCHAR(100) NOT NULL,
     category        VARCHAR(100),
     description     TEXT,
-    unit_price      NUMERIC(12, 2) NOT NULL DEFAULT 0.00 CHECK (unit_price >= 0),
+    unit_price      NUMERIC(13, 3) NOT NULL DEFAULT 0.00 CHECK (unit_price >= 0),
     unit_cost       NUMERIC(12, 2) NOT NULL DEFAULT 0.00 CHECK (unit_cost >= 0),
     tax_rate        NUMERIC(5, 2) NOT NULL DEFAULT 0.00 CHECK (tax_rate >= 0),
     is_subscription BOOLEAN NOT NULL DEFAULT FALSE,
